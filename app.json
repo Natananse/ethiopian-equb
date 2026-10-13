@@ -1,0 +1,16 @@
+
+{
+  "expo": {
+    "name": "Ethiopian Equb",
+    "slug": "ethiopian-equb",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.natnael.ethiopianequb"
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
+  }
+}
