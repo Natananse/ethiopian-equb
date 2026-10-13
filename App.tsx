@@ -186,25 +186,61 @@ export default function App() {
   };
 
   const renderHome = () => (
-    <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.hero}>
-        <Text style={styles.eyebrow}>{t.activeCycle.toUpperCase()}</Text>
-        <Text style={styles.heroTitle}>{state.groupName}</Text>
-        <Text style={styles.heroSub}>{cycle?.label ?? t.noActiveCycle} · {money(state.contributionAmount)} / member</Text>
-        <View style={styles.progressHeader}><Text style={styles.muted}>{t.progress}</Text><Text style={styles.progressNumber}>{progress}%</Text></View>
-        <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress}%` }]}/></View>
-        <Text style={styles.mutedSmall}>{paidCount} / {state.members.filter(m => m.status === "active").length} members paid</Text>
+    <ScrollView contentContainerStyle={styles.modernContent}>
+      <View style={styles.heroShell}>
+        <View style={styles.topBar}>
+          <View style={styles.brandChip}><Text style={styles.brandIcon}>♪</Text></View>
+          <View style={styles.searchPill}>
+            <Text style={styles.searchText}>Blen Ahun endetega tefekdeligi yihone</Text>
+            <Text style={styles.chevron}>⌄</Text>
+          </View>
+          <View style={styles.avatarBubble}><Text style={styles.avatarLetter}>N</Text></View>
+        </View>
+
+        <View style={styles.greetingRow}>
+          <View>
+            <Text style={styles.greeting}>Good evening</Text>
+            <Text style={styles.name}>Natnael</Text>
+          </View>
+        </View>
+
+        <View style={styles.walletCard}>
+          <Text style={styles.walletLabel}>MY WALLET</Text>
+          <Text style={styles.balance}>0.00 <Text style={styles.currency}>ETB</Text></Text>
+          <Text style={styles.walletHint}>Wallet balance</Text>
+          <Pressable style={styles.activeEqubButton}>
+            <Text style={styles.activeEqubText}>◔ 0 Active Equbs</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.caughtUpCard}>
+          <View style={styles.checkBadge}><Text style={styles.checkText}>✓</Text></View>
+          <View style={styles.caughtLabelWrap}>
+            <Text style={styles.caughtTitle}>All caught up</Text>
+            <Text style={styles.caughtSubtitle}>No outstanding bills</Text>
+          </View>
+        </View>
+
+        <Text style={styles.quickTitle}>QUICK ACTIONS</Text>
+        <View style={styles.quickGrid}>
+          {[
+            { label: "Savings", icon: "◫", tint: "#DDEFEA" },
+            { label: "Invitations", icon: "✉", tint: "#E3E9F7" },
+            { label: "History", icon: "◔", tint: "#E9E0F5" },
+            { label: "Alerts", icon: "◌", tint: "#F1E9D8" },
+          ].map((item) => (
+            <Pressable key={item.label} style={[styles.quickItem, { backgroundColor: item.tint }]}>
+              <View style={styles.quickIconWrap}><Text style={styles.quickIcon}>{item.icon}</Text></View>
+              <Text style={styles.quickLabel}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitleText}>Joined Equbs</Text>
+          <View style={styles.fabBlue}><Text style={styles.fabText}>▣</Text></View>
+        </View>
       </View>
-      <View style={styles.grid}>
-        <Metric label={t.expected} value={money(expected)} sub={`${state.members.filter(m => m.status === "active").length} active members`}/>
-        <Metric label={t.collected} value={money(collected)} sub={`${paidCount} members`} color={C.green}/>
-        <Metric label={t.outstanding} value={money(outstanding)} sub={`${Math.max(0, state.members.filter(m => m.status === "active").length - paidCount)} unpaid members`} color={C.gold}/>
-        <Metric label={t.memberCount} value={String(state.members.length)} sub="Demo and registered members"/>
-      </View>
-      <Text style={styles.sectionTitle}>{t.quickActions}</Text>
-      <View style={styles.actionsRow}><ActionButton label={`＋ ${t.addMember}`} onPress={() => setShowAddMember(true)}/><ActionButton label={`＋ ${t.recordPayment}`} onPress={() => { setSelectedMember(""); setPaymentAmount(String(state.contributionAmount)); setShowPaymentForm(true); }} secondary/></View>
-      <Text style={styles.sectionTitle}>{t.recentPayments}</Text>
-      {state.contributions.slice(-4).reverse().map(p => <View style={styles.listRow} key={p.id}><View style={styles.avatar}><Text style={styles.avatarText}>{memberName(p.memberId).slice(0,1)}</Text></View><View style={styles.rowMain}><Text style={styles.rowTitle}>{memberName(p.memberId)}</Text><Text style={styles.mutedSmall}>{new Date(p.paidAt).toLocaleDateString()}</Text></View><View style={styles.rowRight}><Text style={styles.rowAmount}>{money(p.amount)}</Text><Badge status={p.status}/></View></View>)}
     </ScrollView>
   );
 
@@ -268,11 +304,10 @@ export default function App() {
   );
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "home", label: t.dashboard, icon: "⌂" },
-    { id: "members", label: t.members, icon: "♙" },
-    { id: "payments", label: t.payments, icon: "⇄" },
-    { id: "payouts", label: t.payouts, icon: "◈" },
-    { id: "settings", label: t.settings, icon: "⚙" },
+    { id: "home", label: "Home", icon: "⌂" },
+    { id: "members", label: "Search", icon: "⌕" },
+    { id: "payments", label: "Wallet", icon: "◫" },
+    { id: "settings", label: "Profile", icon: "◌" },
   ];
 
   return (
@@ -283,7 +318,26 @@ export default function App() {
         <View style={styles.header}><View><Text style={styles.brand}>EQUB</Text><Text style={styles.headerSub}>ETHIOPIAN SAVINGS CIRCLE</Text></View><View style={styles.livePill}><View style={styles.liveDot}/><Text style={styles.liveText}>DEMO</Text></View></View>
         <View style={styles.demoBanner}><Text style={styles.demoBannerText}>{t.demoNotice}</Text></View>
         <View style={styles.main}>{tab === "home" ? renderHome() : tab === "members" ? renderMembers() : tab === "payments" ? renderPayments() : tab === "payouts" ? renderPayouts() : renderSettings()}</View>
-        <View style={styles.tabBar}>{tabs.map(item => <Pressable key={item.id} onPress={() => tab !== item.id && setTab(item.id)} style={[styles.tabItem, tab === item.id && styles.tabActive]}><Text style={[styles.tabIcon, tab === item.id && styles.tabIconActive]}>{item.icon}</Text><Text numberOfLines={1} style={[styles.tabLabel, tab === item.id && styles.tabLabelActive]}>{item.label}</Text></Pressable>)}</View>
+
+        <View style={styles.tabBar}>
+          {tabs.map((item) => {
+            const selected = tab === item.id;
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => setTab(item.id)}
+                style={[styles.tabItem, selected && styles.tabActive]}
+              >
+                <Text style={[styles.tabIcon, selected && styles.tabIconActive]}>{item.icon}</Text>
+                <Text numberOfLines={1} style={[styles.tabLabel, selected && styles.tabLabelActive]}>{item.label}</Text>
+              </Pressable>
+            );
+          })}
+
+          <Pressable onPress={() => setTab("payouts")} style={styles.floatingTabButton}>
+            <Text style={styles.floatingTabIcon}>▣</Text>
+          </Pressable>
+        </View>
 
         {showAddMember ? <View style={styles.modalShade}><View style={styles.modal}><Text style={styles.modalTitle}>{t.addMember}</Text><TextInput value={newName} onChangeText={setNewName} placeholder={t.name} placeholderTextColor={C.muted} style={styles.input}/><TextInput value={newPhone} onChangeText={setNewPhone} placeholder={t.phone} placeholderTextColor={C.muted} keyboardType="phone-pad" style={styles.input}/><View style={styles.actionsRow}><ActionButton label={t.cancel} onPress={() => setShowAddMember(false)} secondary/><ActionButton label={t.save} onPress={addMember}/></View></View></View> : null}
 
@@ -410,24 +464,100 @@ const styles = StyleSheet.create({
   paymentCard: { backgroundColor: C.panel, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.border, gap: 7 },
   tabBar: {
     flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#0B52BD",
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.12)",
-    paddingTop: 8,
-    paddingBottom: 7,
-    paddingHorizontal: 3,
-    alignItems: "center",
+    paddingTop: 10,
+    paddingBottom: 12,
+    paddingHorizontal: 14,
+    position: "relative",
   },
   tabItem: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 6, gap: 3, borderRadius: 12 },
   tabActive: { backgroundColor: "#FFFFFF" },
-  tabIcon: { color: "#DDEEFF", fontSize: 19, height: 22 },
+  tabIcon: { color: "#DDEEFF", fontSize: 20, height: 22 },
   tabIconActive: { color: C.blue },
   tabLabel: { color: "#DDEEFF", fontSize: 9, fontWeight: "600" },
   tabLabelActive: { color: C.blue, fontWeight: "800" },
+  floatingTabButton: {
+    position: "absolute",
+    bottom: 18,
+    left: "50%",
+    marginLeft: -30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: C.blue,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 4,
+    borderColor: "#0B52BD",
+    shadowColor: "#0A5ED5",
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
+  floatingTabIcon: { color: "#FFF", fontSize: 22, fontWeight: "800" },
   modalShade: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#000000AA", justifyContent: "center", padding: 18 },
   modal: { backgroundColor: C.panel, borderRadius: 18, borderWidth: 1, borderColor: C.border, padding: 17, maxHeight: "90%" },
   modalTitle: { color: C.deep, fontSize: 19, fontWeight: "900", marginBottom: 10 },
   fieldLabel: { color: C.muted, fontSize: 12, fontWeight: "700", marginTop: 9 },
   memberOption: { padding: 10, borderBottomWidth: 1, borderBottomColor: C.border, borderRadius: 8 },
-  memberOptionSelected: { backgroundColor: "#E5F1FF", borderWidth: 1, borderColor: C.blue }
+  memberOptionSelected: { backgroundColor: "#E5F1FF", borderWidth: 1, borderColor: C.blue },
+  modernContent: { padding: 0, paddingBottom: 22 },
+  heroShell: { backgroundColor: "#2E3F4D", borderBottomLeftRadius: 30, borderBottomRightRadius: 30, padding: 18, paddingBottom: 14 },
+  topBar: { flexDirection: "row", alignItems: "center", gap: 10 },
+  brandChip: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#0A5ED5", alignItems: "center", justifyContent: "center" },
+  brandIcon: { color: "#FFF", fontSize: 18, fontWeight: "800" },
+  searchPill: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" },
+  searchText: { color: "#E9F6FF", fontSize: 11, fontWeight: "500", flex: 1, opacity: 0.8 },
+  chevron: { color: "#E9F6FF", fontSize: 18, fontWeight: "700" },
+  avatarBubble: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.16)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" },
+  avatarLetter: { color: "#FFF", fontSize: 18, fontWeight: "800" },
+  greetingRow: { paddingTop: 24, paddingBottom: 18 },
+  greeting: { color: "#E7F2FF", fontSize: 22, fontWeight: "500" },
+  name: { color: "#FFF", fontSize: 40, fontWeight: "800", lineHeight: 46 },
+  walletCard: {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 28,
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  walletLabel: { color: "#E7F2FF", fontSize: 14, fontWeight: "700", letterSpacing: 2 },
+  balance: { color: "#FFF", fontSize: 54, fontWeight: "700", marginTop: 10 },
+  currency: { color: "#D7E8FF", fontSize: 22, fontWeight: "600", marginLeft: 4 },
+  walletHint: { color: "#D7E8FF", fontSize: 18, opacity: 0.82 },
+  activeEqubButton: { backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 12, marginTop: 18, width: "100%", alignItems: "center" },
+  activeEqubText: { color: "#FFF", fontSize: 18, fontWeight: "700" },
+  caughtUpCard: {
+    marginTop: 18,
+    backgroundColor: "#DDF6EE",
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  checkBadge: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#BFE9D7", alignItems: "center", justifyContent: "center" },
+  checkText: { color: "#2C9A74", fontSize: 20, fontWeight: "800" },
+  caughtLabelWrap: { flex: 1 },
+  caughtTitle: { color: "#1D3048", fontSize: 20, fontWeight: "700" },
+  caughtSubtitle: { color: "#4D6278", fontSize: 14, marginTop: 4 },
+  quickTitle: { color: "#E9F7FF", fontSize: 16, fontWeight: "700", textTransform: "uppercase", marginTop: 26, marginBottom: 12, letterSpacing: 1.2 },
+  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  quickItem: { width: "48%", height: 100, borderRadius: 18, padding: 14, justifyContent: "space-between" },
+  quickIconWrap: { width: 46, height: 46, borderRadius: 23, backgroundColor: "rgba(255,255,255,0.4)", alignItems: "center", justifyContent: "center" },
+  quickIcon: { color: "#1C2A3F", fontSize: 22, fontWeight: "700" },
+  quickLabel: { color: "#1C2A3F", fontSize: 17, fontWeight: "700" },
+  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 26, marginBottom: 10 },
+  sectionTitleText: { color: "#EAF7FF", fontSize: 18, fontWeight: "700" },
+  fabBlue: { width: 48, height: 48, borderRadius: 24, backgroundColor: "#0A5ED5", alignItems: "center", justifyContent: "center", shadowColor: "#0A5ED5", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  fabText: { color: "#FFF", fontSize: 18, fontWeight: "800" }
 });
