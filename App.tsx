@@ -72,7 +72,7 @@ const C = {
   white: "#FFFFFF",
   muted: "#4F6E8E",
   green: "#1FB97A",
-  red: "#E45B74",
+  red: "#2370b0",
   blue: "#0A5ED5",
   border: "#D5E8FF",
   dark: "#0B2F5F",
