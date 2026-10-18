@@ -1,16 +1,24 @@
-
 {
   "expo": {
-    "name": "Ethiopian Equb",
-    "slug": "ethiopian-equb",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "dark",
     "android": {
       "package": "com.natnael.ethiopianequb"
     },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "name": "Ethiopian Equb",
+    "orientation": "portrait",
     "plugins": [
-      "expo-status-bar"
-    ]
+      "expo-router",
+      "expo-status-bar",
+      "expo-font"
+    ],
+    "scheme": "ethiopian-equb",
+    "slug": "ethiopian-equb",
+    "userInterfaceStyle": "automatic",
+    "version": "1.0.0",
+    "web": {
+      "bundler": "metro"
+    }
   }
 }

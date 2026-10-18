@@ -1,14 +1,66 @@
 # Ethiopian Equb — Expo TypeScript MVP
 
 A mobile-first Equb management MVP with:
+
 - Amharic / English UI toggle
+- **Dark / light theme** — a header toggler plus Light / Dark / System in Settings, persisted on device
 - 40 fictional demo members
 - Dashboard totals driven by the financial engine
-- Local persistence on the device
+- Local persistence on the device (Zustand + AsyncStorage)
 - Member list, search, and add-member form
 - Contribution records with pending / confirmed / rejected states
 - Payout list and a guarded approval helper
 - Unit tests for core collection and payment rules
+
+## Architecture
+
+File-based routing with **Expo Router**, global state with **Zustand**, and a
+token-based theme system. Routes are thin files that re-export feature screens,
+so navigation structure and feature code scale independently.
+
+```
+app/                          # Expo Router routes (thin re-exports only)
+  _layout.tsx                 # Root stack: hydration gate, theme-aware chrome
+  index.tsx                   # "/" -> redirects to the (tabs) group
+  (tabs)/
+    _layout.tsx               # Tab bar (Dashboard, Members, Payments, Payouts, Settings)
+    index.tsx                 # Dashboard tab
+    members.tsx  payments.tsx  payouts.tsx  settings.tsx
+  add-member.tsx              # Modal route
+  record-payment.tsx          # Modal route
+
+src/
+  core/
+    engine/                   # Pure financial domain: types, rules, demo seed, tests
+    i18n/                     # Amharic / English translations + useTranslation hook
+  store/                      # Zustand stores + derived selectors
+    useEqubStore.ts           # Equb data + actions, persisted to AsyncStorage
+    useSettingsStore.ts       # Language + theme mode (light | dark | system), persisted
+    selectors.ts              # Active cycle, cycle metrics, member lookups
+  theme/                      # Light/dark color palettes, spacing/radius tokens, useTheme
+  components/
+    ui/                       # Screen, Card, MetricCard, AppButton, AppTextInput,
+                              # StatusBadge, ProgressBar, SegmentedControl, Notice, ThemeToggle
+    layout/                   # AppHeader (brand + theme toggler), DemoBanner
+  features/                   # One folder per feature: screens/ + components/ + index.ts
+    dashboard/  members/  payments/  payouts/  settings/
+  hooks/
+    useStoreHydration.ts      # Gates the UI until both stores rehydrate
+```
+
+Imports use the `@/*` alias for `src/*` (tsconfig `paths`, resolved by Metro).
+
+### State & persistence notes
+
+- `useEqubStore` persists under the **same AsyncStorage key and raw JSON shape**
+  (`ethiopian-equb-state-v1`) the previous single-file app used, via a small
+  storage adapter — existing installs keep their data across the refactor.
+- `useSettingsStore` persists under `ethiopian-equb-settings-v1`.
+- Theme resolution: Settings stores `light | dark | system`; `useTheme()`
+  resolves `system` against the OS color scheme and returns the active palette.
+  The header `ThemeToggle` flips the resolved theme to an explicit mode.
+- The engine in `src/core/engine` stays pure and framework-free: stores call
+  it, screens never mutate state directly.
 
 ## Important status
 
@@ -20,19 +72,20 @@ This is a **local MVP**, not a production financial service. Data is stored on t
 - npm
 - Android emulator, Android phone with Expo Go, or a browser for supported Expo web features
 
-## Run on Ubuntu
+## Run
 
 ```bash
-unzip ethiopian-equb-app.zip
-cd ethiopian-equb-app
+git clone https://github.com/yoh-space/ethiopian-equb.git
+cd ethiopian-equb
 npm install
 npx expo start
 ```
 
 Then:
+
 - Press `a` to open Android emulator if Android Studio emulator is installed and running.
 - Or scan the QR code with Expo Go on a compatible phone.
-- For web, install the required web dependencies if Expo prompts you, then use `w`.
+- For web, press `w` (react-native-web + react-dom are installed).
 
 ## Test the financial engine
 
@@ -63,4 +116,3 @@ Pending contributions are excluded from confirmed totals. The sample payout is l
 4. Integrate a payment provider only after reviewing its official requirements and obtaining credentials.
 5. Add backups, monitoring, reconciliation, privacy controls, and security testing.
 6. Test with a small, consenting pilot group before production.
-# ethiopian-equb

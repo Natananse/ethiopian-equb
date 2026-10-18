@@ -1,0 +1,48 @@
+import { router } from "expo-router";
+import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { AppButton, AppTextInput } from "@/components/ui";
+import { useTranslation } from "@/core/i18n";
+import { useEqubStore } from "@/store";
+import { spacing, useTheme } from "@/theme";
+
+/** Modal route: /add-member */
+export function AddMemberScreen() {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const addMember = useEqubStore((s) => s.addMember);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const save = () => {
+    if (!name.trim() || !phone.trim()) {
+      Alert.alert("Required", t.required);
+      return;
+    }
+    try {
+      addMember(name, phone);
+    } catch (error) {
+      Alert.alert("Could not add member", error instanceof Error ? error.message : "Unknown error");
+      return;
+    }
+    Alert.alert("Success", t.memberAdded, [{ text: "OK", onPress: () => router.back() }]);
+  };
+
+  return (
+    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.content}>
+      <Text style={[styles.title, { color: colors.text }]}>{t.addMember}</Text>
+      <AppTextInput value={name} onChangeText={setName} placeholder={t.name} autoFocus />
+      <AppTextInput value={phone} onChangeText={setPhone} placeholder={t.phone} keyboardType="phone-pad" />
+      <View style={styles.actions}>
+        <AppButton label={t.cancel} onPress={() => router.back()} secondary />
+        <AppButton label={t.save} onPress={save} />
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { padding: spacing.lg, gap: spacing.sm },
+  title: { fontSize: 19, fontWeight: "900", marginBottom: 6 },
+  actions: { flexDirection: "row", gap: 9, marginTop: 12 },
+});
