@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppButton, Card, Notice, Screen } from "@/components/ui";
 import { currentRotationNumber, eligibleDrawMembers, membersWithIdentityIssues, type DrawRecord } from "@/core/engine";
@@ -75,7 +76,7 @@ export function DrawScreen() {
         <Card style={styles.cycleCard}>
           <View style={styles.cycleHeader}>
             <View style={[styles.cycleMark, { backgroundColor: colors.surfaceAlt }]}>
-              <Text style={[styles.cycleMarkText, { color: colors.primary }]}>✦</Text>
+              <Ionicons name="sparkles-outline" size={24} color={colors.primary} />
             </View>
             <View style={styles.cycleInfo}>
               <Text style={[styles.eyebrow, { color: colors.primary }]}>{t.activeCycle}</Text>
@@ -227,7 +228,6 @@ const styles = StyleSheet.create({
   poolCard: { gap: spacing.sm },
   cycleHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   cycleMark: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  cycleMarkText: { fontSize: 23, fontWeight: "900" },
   cycleInfo: { flex: 1, gap: 2 },
   eyebrow: { fontSize: 10, fontWeight: "800", letterSpacing: 1 },
   cycleTitle: { fontSize: 16, fontWeight: "800" },

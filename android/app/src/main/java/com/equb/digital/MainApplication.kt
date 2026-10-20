@@ -1,4 +1,4 @@
-package com.natnael.ethiopianequb
+package com.equb.digital
 
 import android.app.Application
 import android.content.res.Configuration

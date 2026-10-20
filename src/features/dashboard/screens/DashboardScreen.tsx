@@ -1,4 +1,6 @@
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import type { ComponentProps } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Card, MetricCard, ProgressBar, Screen } from "@/components/ui";
 import { money } from "@/core/engine";
@@ -18,12 +20,12 @@ export function DashboardScreen() {
   const nextPayout = data.payouts.find((p) => p.status === "scheduled" || p.status === "pending_approval");
   const recent = data.contributions.slice(-5).reverse();
 
-  const quickActions: { label: string; icon: string; onPress: () => void }[] = [
-    { label: t.drawLottery, icon: "✦", onPress: () => router.push("/draw") },
-    { label: t.addMember, icon: "＋", onPress: () => router.push("/add-member") },
-    { label: t.recordPayment, icon: "◫", onPress: () => router.push("/record-payment") },
-    { label: t.members, icon: "⌕", onPress: () => router.push("/members") },
-    { label: t.payouts, icon: "▣", onPress: () => router.push("/payouts") },
+  const quickActions: { label: string; icon: ComponentProps<typeof Ionicons>["name"]; onPress: () => void }[] = [
+    { label: t.drawLottery, icon: "sparkles-outline", onPress: () => router.push("/draw") },
+    { label: t.addMember, icon: "person-add-outline", onPress: () => router.push("/add-member") },
+    { label: t.recordPayment, icon: "card-outline", onPress: () => router.push("/record-payment") },
+    { label: t.members, icon: "people-outline", onPress: () => router.push("/members") },
+    { label: t.payouts, icon: "trophy-outline", onPress: () => router.push("/payouts") },
   ];
 
   return (
@@ -69,7 +71,7 @@ export function DashboardScreen() {
               onPress={item.onPress}
               style={[styles.quickItem, { backgroundColor: colors.surface, borderColor: colors.border }]}
             >
-              <Text style={[styles.quickIcon, { color: colors.primary }]}>{item.icon}</Text>
+              <Ionicons name={item.icon} size={22} color={colors.primary} />
               <Text style={[styles.quickLabel, { color: colors.text }]}>{item.label}</Text>
             </Pressable>
           ))}
@@ -114,6 +116,5 @@ const styles = StyleSheet.create({
     padding: spacing.lg - 2,
     gap: 8,
   },
-  quickIcon: { fontSize: 20, fontWeight: "800" },
   quickLabel: { fontSize: 13, fontWeight: "700" },
 });

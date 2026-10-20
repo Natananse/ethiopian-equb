@@ -1,20 +1,25 @@
 {
   "expo": {
+    "icon": "./assets/icon.png",
     "android": {
-      "package": "com.natnael.ethiopianequb"
+      "package": "com.equb.digital",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon/foreground.png",
+        "backgroundColor": "./assets/adaptive-icon/background.png"
+      }
     },
     "experiments": {
       "typedRoutes": true
     },
-    "name": "Ethiopian Equb",
+    "name": "Equb",
     "orientation": "portrait",
     "plugins": [
       "expo-router",
       "expo-status-bar",
       "expo-font"
     ],
-    "scheme": "ethiopian-equb",
-    "slug": "ethiopian-equb",
+    "scheme": "equb",
+    "slug": "equb",
     "userInterfaceStyle": "automatic",
     "version": "1.0.0",
     "web": {

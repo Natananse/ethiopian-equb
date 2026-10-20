@@ -2,7 +2,7 @@ export type Language = "en" | "am";
 
 export const translations = {
   en: {
-    dashboard: "Dashboard", members: "Members", payments: "Payments", payouts: "Payouts", settings: "Settings",
+    dashboard: "Dashboard", members: "Members", payments: "Payments", payouts: "Payouts", finance: "Finance", settings: "Settings",
     expected: "Expected collection", collected: "Confirmed collection", outstanding: "Outstanding",
     progress: "Collection progress", paid: "Paid members", nextPayout: "Scheduled payout",
     activeCycle: "Active cycle", quickActions: "Quick actions", addMember: "Add member",
@@ -42,7 +42,7 @@ export const translations = {
     goToMembers: "Open members", identityIssueTag: "IDENTITY NEEDS FIX", drawnWinner: "Drawn winner", drawNoTransfer: "Selecting a winner does not create or approve a payout.",
   },
   am: {
-    dashboard: "ዋና ገጽ", members: "አባላት", payments: "ክፍያዎች", payouts: "የክፍያ ዝርዝር", settings: "ቅንብሮች",
+    dashboard: "ዋና ገጽ", members: "አባላት", payments: "ክፍያዎች", payouts: "የክፍያ ዝርዝር", finance: "ፋይናንስ", settings: "ቅንብሮች",
     expected: "የሚጠበቅ ገቢ", collected: "የተረጋገጠ ገቢ", outstanding: "ያልተከፈለ",
     progress: "የክፍያ እድገት", paid: "የከፈሉ አባላት", nextPayout: "የታቀደ ክፍያ",
     activeCycle: "ንቁ ዙር", quickActions: "ፈጣን እርምጃዎች", addMember: "አባል ጨምር",

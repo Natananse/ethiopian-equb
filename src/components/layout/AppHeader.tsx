@@ -1,9 +1,13 @@
-import { StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "@/core/i18n";
 import { spacing, useTheme } from "@/theme";
 import { ThemeToggle } from "../ui/ThemeToggle";
 
 export function AppHeader() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   return (
     <View style={[styles.header, { backgroundColor: colors.brand }]}>
       <View>
@@ -12,6 +16,14 @@ export function AppHeader() {
       </View>
       <View style={styles.right}>
         <ThemeToggle />
+        <Pressable
+          accessibilityLabel={t.settings}
+          accessibilityRole="button"
+          onPress={() => router.push("/settings")}
+          style={[styles.settingsButton, { borderColor: colors.onBrandMuted }]}
+        >
+          <Ionicons name="settings-outline" size={18} color={colors.onBrand} />
+        </Pressable>
         <View style={[styles.livePill, { borderColor: colors.onBrandMuted }]}>
           <View style={[styles.liveDot, { backgroundColor: colors.accent }]} />
           <Text style={[styles.liveText, { color: colors.onBrand }]}>DEMO</Text>
@@ -33,6 +45,14 @@ const styles = StyleSheet.create({
   brand: { fontSize: 28, fontWeight: "900", letterSpacing: 4 },
   sub: { fontSize: 9, letterSpacing: 1.6, marginTop: 2 },
   right: { flexDirection: "row", alignItems: "center", gap: 8 },
+  settingsButton: {
+    width: 34,
+    height: 34,
+    borderWidth: 1,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   livePill: {
     borderWidth: 1,
     borderRadius: 30,

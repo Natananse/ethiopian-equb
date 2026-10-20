@@ -1,4 +1,4 @@
-package com.natnael.ethiopianequb
+package com.equb.digital
 
 import android.os.Build
 import android.os.Bundle

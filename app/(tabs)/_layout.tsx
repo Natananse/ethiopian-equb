@@ -1,11 +1,7 @@
 import { Tabs } from "expo-router";
-import { Text, type ColorValue } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "@/core/i18n";
 import { useTheme } from "@/theme";
-
-function TabIcon({ glyph, color }: { glyph: string; color: ColorValue }) {
-  return <Text style={{ color, fontSize: 20 }}>{glyph}</Text>;
-}
 
 export default function TabsLayout() {
   const { colors } = useTheme();
@@ -27,27 +23,27 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t.dashboard, tabBarIcon: ({ color }) => <TabIcon glyph="⌂" color={color} /> }}
+        options={{ title: t.dashboard, tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={22} color={color} /> }}
       />
       <Tabs.Screen
         name="members"
-        options={{ title: t.members, tabBarIcon: ({ color }) => <TabIcon glyph="⌕" color={color} /> }}
+        options={{ title: t.members, tabBarIcon: ({ color }) => <Ionicons name="people-outline" size={22} color={color} /> }}
       />
       <Tabs.Screen
         name="draw"
-        options={{ title: t.drawLottery, tabBarIcon: ({ color }) => <TabIcon glyph="✦" color={color} /> }}
+        options={{ title: t.drawLottery, tabBarIcon: ({ color }) => <Ionicons name="sparkles-outline" size={22} color={color} /> }}
       />
       <Tabs.Screen
         name="payments"
-        options={{ title: t.payments, tabBarIcon: ({ color }) => <TabIcon glyph="◫" color={color} /> }}
+        options={{ title: t.finance, tabBarIcon: ({ color }) => <Ionicons name="wallet-outline" size={22} color={color} /> }}
       />
       <Tabs.Screen
         name="payouts"
-        options={{ title: t.payouts, tabBarIcon: ({ color }) => <TabIcon glyph="▣" color={color} /> }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="settings"
-        options={{ title: t.settings, tabBarIcon: ({ color }) => <TabIcon glyph="◌" color={color} /> }}
+        options={{ href: null }}
       />
     </Tabs>
   );

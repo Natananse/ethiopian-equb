@@ -34,7 +34,7 @@ export function MembersScreen() {
             <View style={styles.titleRow}>
               <Text style={[styles.pageTitle, { color: colors.text }]}>{t.allMembers}</Text>
               <View style={styles.addButton}>
-                <AppButton label={`＋ ${t.add}`} onPress={() => router.push("/add-member")} />
+                <AppButton label={t.add} icon="add" onPress={() => router.push("/add-member")} />
               </View>
             </View>
             <AppTextInput value={query} onChangeText={setQuery} placeholder={t.search} />
