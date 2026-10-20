@@ -6,6 +6,9 @@ export type CycleStatus = "upcoming" | "active" | "completed";
 export interface Member {
   id: string;
   name: string;
+  /** Optional only because older installs were saved before these fields existed. */
+  customerNumber?: string;
+  idNumber?: string;
   phone: string;
   joinedAt: string;
   status: MemberStatus;
@@ -27,7 +30,23 @@ export interface Cycle {
   dueDate: string;
   contributionAmount: number;
   status: CycleStatus;
-  recipientMemberId: string;
+  /** Participant snapshot; absent only on legacy data that predates cycle snapshots. */
+  participantMemberIds?: string[];
+  /** Absent until a winner is selected; retained as optional for legacy compatibility. */
+  recipientMemberId?: string;
+}
+
+export interface DrawRecord {
+  id: string;
+  cycleId: string;
+  winnerMemberId: string;
+  winnerName: string;
+  winnerCustomerNumber: string;
+  winnerIdNumber: string;
+  rotationNumber: number;
+  sequenceNumber: number;
+  eligibleBefore: number;
+  drawnAt: string;
 }
 
 export interface Payout {
@@ -52,4 +71,8 @@ export interface EqubState {
   contributions: Contribution[];
   cycles: Cycle[];
   payouts: Payout[];
+  /** Missing on pre-lottery installs; readers treat it as an empty history. */
+  draws?: DrawRecord[];
+  /** Each rotation gives every active member one chance before the pool resets. */
+  currentRotation?: number;
 }

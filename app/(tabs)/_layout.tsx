@@ -22,7 +22,7 @@ export default function TabsLayout() {
           backgroundColor: colors.tabBar,
           borderTopColor: colors.border,
         },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "700" },
+        tabBarLabelStyle: { fontSize: 9, fontWeight: "700" },
       }}
     >
       <Tabs.Screen
@@ -32,6 +32,10 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="members"
         options={{ title: t.members, tabBarIcon: ({ color }) => <TabIcon glyph="⌕" color={color} /> }}
+      />
+      <Tabs.Screen
+        name="draw"
+        options={{ title: t.drawLottery, tabBarIcon: ({ color }) => <TabIcon glyph="✦" color={color} /> }}
       />
       <Tabs.Screen
         name="payments"

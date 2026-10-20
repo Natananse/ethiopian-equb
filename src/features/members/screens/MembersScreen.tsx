@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
-import { AppButton, AppTextInput, Screen } from "@/components/ui";
-import { money } from "@/core/engine";
+import { AppButton, AppTextInput, Notice, Screen } from "@/components/ui";
+import { membersWithIdentityIssues, money } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
 import { selectActiveCycle, selectConfirmedContribution, useEqubStore } from "@/store";
 import { spacing, useTheme } from "@/theme";
@@ -15,8 +15,11 @@ export function MembersScreen() {
   const [query, setQuery] = useState("");
 
   const cycleId = selectActiveCycle(data)?.id ?? "";
+  const identityIssueMembers = membersWithIdentityIssues(data);
+  const identityIncompleteCount = identityIssueMembers.length;
+  const identityIssueIds = new Set(identityIssueMembers.map((member) => member.id));
   const filtered = useMemo(
-    () => data.members.filter((m) => `${m.name} ${m.phone}`.toLowerCase().includes(query.toLowerCase())),
+    () => data.members.filter((m) => `${m.name} ${m.customerNumber ?? ""} ${m.idNumber ?? ""} ${m.phone}`.toLowerCase().includes(query.toLowerCase())),
     [data.members, query]
   );
 
@@ -35,6 +38,9 @@ export function MembersScreen() {
               </View>
             </View>
             <AppTextInput value={query} onChangeText={setQuery} placeholder={t.search} />
+            {identityIncompleteCount > 0 ? (
+              <Notice>{`${t.identityIncomplete} (${identityIncompleteCount})`}</Notice>
+            ) : null}
           </View>
         }
         ListEmptyComponent={<Text style={{ color: colors.muted, fontSize: 13 }}>{t.noMembers}</Text>}
@@ -45,6 +51,8 @@ export function MembersScreen() {
               member={item}
               paid={Boolean(confirmed)}
               amountLabel={money(confirmed?.amount ?? data.contributionAmount)}
+              onEdit={() => router.push({ pathname: "/edit-member", params: { memberId: item.id } })}
+              identityIssue={identityIssueIds.has(item.id)}
             />
           );
         }}

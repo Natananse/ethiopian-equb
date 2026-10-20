@@ -36,6 +36,10 @@ export default function RootLayout() {
             options={{ presentation: "modal", headerShown: true, title: t.addMember, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
           />
           <Stack.Screen
+            name="edit-member"
+            options={{ presentation: "modal", headerShown: true, title: t.editMember, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
+          />
+          <Stack.Screen
             name="record-payment"
             options={{ presentation: "modal", headerShown: true, title: t.recordPayment, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
           />

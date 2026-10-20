@@ -1,7 +1,8 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { AppButton, AppTextInput } from "@/components/ui";
+import { AppButton, AppTextInput, Notice } from "@/components/ui";
+import { money } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
 import { selectActiveCycle, useEqubStore } from "@/store";
 import { radius, spacing, useTheme } from "@/theme";
@@ -13,7 +14,8 @@ export function RecordPaymentScreen() {
   const data = useEqubStore((s) => s.data);
   const recordPayment = useEqubStore((s) => s.recordPayment);
 
-  const cycleId = selectActiveCycle(data)?.id ?? "";
+  const activeCycle = selectActiveCycle(data);
+  const cycleId = activeCycle?.id ?? "";
   const [selectedMember, setSelectedMember] = useState("");
   const [amount, setAmount] = useState(String(data.contributionAmount));
   const [note, setNote] = useState("");
@@ -40,10 +42,13 @@ export function RecordPaymentScreen() {
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.content}>
       <Text style={[styles.title, { color: colors.text }]}>{t.recordPayment}</Text>
+      {activeCycle ? (
+        <Notice>{`${t.activeCycle}: ${activeCycle.label} · ${money(activeCycle.contributionAmount)}`}</Notice>
+      ) : <Notice>{t.noActiveCycle}</Notice>}
       <Text style={[styles.label, { color: colors.muted }]}>{t.selectMember}</Text>
       <View>
         {data.members
-          .filter((m) => m.status === "active")
+          .filter((m) => m.status === "active" && (!activeCycle?.participantMemberIds || activeCycle.participantMemberIds.includes(m.id)))
           .map((m) => (
             <Pressable
               key={m.id}
@@ -55,7 +60,10 @@ export function RecordPaymentScreen() {
               ]}
             >
               <Text style={[styles.optionTitle, { color: colors.text }]}>{m.name}</Text>
-              <Text style={[styles.optionMeta, { color: colors.muted }]}>{m.phone}</Text>
+              <Text style={[styles.optionMeta, { color: colors.muted }]}>
+                {t.customerNumber}: {m.customerNumber ?? t.noIdentity} · {t.idNumber}: {m.idNumber ?? t.noIdentity}
+              </Text>
+              {m.phone ? <Text style={[styles.optionMeta, { color: colors.muted }]}>{t.phone}: {m.phone}</Text> : null}
             </Pressable>
           ))}
       </View>

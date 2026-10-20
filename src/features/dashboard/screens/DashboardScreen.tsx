@@ -19,6 +19,7 @@ export function DashboardScreen() {
   const recent = data.contributions.slice(-5).reverse();
 
   const quickActions: { label: string; icon: string; onPress: () => void }[] = [
+    { label: t.drawLottery, icon: "✦", onPress: () => router.push("/draw") },
     { label: t.addMember, icon: "＋", onPress: () => router.push("/add-member") },
     { label: t.recordPayment, icon: "◫", onPress: () => router.push("/record-payment") },
     { label: t.members, icon: "⌕", onPress: () => router.push("/members") },
@@ -47,7 +48,7 @@ export function DashboardScreen() {
           <MetricCard label={t.outstanding} value={money(metrics.outstanding)} color={colors.primary} />
           <MetricCard
             label={t.paid}
-            value={`${metrics.paidCount} / ${data.members.filter((m) => m.status === "active").length}`}
+            value={`${metrics.paidCount} / ${cycle?.participantMemberIds?.length ?? data.members.filter((m) => m.status === "active").length}`}
             color={colors.text}
           />
         </View>
@@ -78,7 +79,14 @@ export function DashboardScreen() {
         {recent.length === 0 ? (
           <Text style={{ color: colors.muted, fontSize: 13 }}>{t.noPayments}</Text>
         ) : (
-          recent.map((p) => <PaymentCard key={p.id} contribution={p} memberName={memberName(data, p.memberId)} />)
+          recent.map((p) => (
+            <PaymentCard
+              key={p.id}
+              contribution={p}
+              memberName={memberName(data, p.memberId)}
+              cycleLabel={data.cycles.find((item) => item.id === p.cycleId)?.label ?? p.cycleId}
+            />
+          ))
         )}
       </ScrollView>
     </Screen>

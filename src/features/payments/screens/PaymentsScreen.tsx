@@ -55,7 +55,11 @@ export function PaymentsScreen() {
         }
         ListEmptyComponent={<Text style={{ color: colors.muted, fontSize: 13 }}>{t.noPayments}</Text>}
         renderItem={({ item }) => (
-          <PaymentCard contribution={item} memberName={memberName(data, item.memberId)}>
+          <PaymentCard
+            contribution={item}
+            memberName={memberName(data, item.memberId)}
+            cycleLabel={data.cycles.find((cycle) => cycle.id === item.cycleId)?.label ?? item.cycleId}
+          >
             {item.status === "pending" ? (
               <View style={styles.actions}>
                 <AppButton label={t.verify} onPress={() => verify(item, true)} />

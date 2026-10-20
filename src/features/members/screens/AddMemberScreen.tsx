@@ -12,15 +12,17 @@ export function AddMemberScreen() {
   const { t } = useTranslation();
   const addMember = useEqubStore((s) => s.addMember);
   const [name, setName] = useState("");
+  const [customerNumber, setCustomerNumber] = useState("");
+  const [idNumber, setIdNumber] = useState("");
   const [phone, setPhone] = useState("");
 
   const save = () => {
-    if (!name.trim() || !phone.trim()) {
+    if (!name.trim() || !customerNumber.trim() || !idNumber.trim()) {
       Alert.alert("Required", t.required);
       return;
     }
     try {
-      addMember(name, phone);
+      addMember({ name, customerNumber, idNumber, phone });
     } catch (error) {
       Alert.alert("Could not add member", error instanceof Error ? error.message : "Unknown error");
       return;
@@ -32,7 +34,9 @@ export function AddMemberScreen() {
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.content}>
       <Text style={[styles.title, { color: colors.text }]}>{t.addMember}</Text>
       <AppTextInput value={name} onChangeText={setName} placeholder={t.name} autoFocus />
-      <AppTextInput value={phone} onChangeText={setPhone} placeholder={t.phone} keyboardType="phone-pad" />
+      <AppTextInput value={customerNumber} onChangeText={setCustomerNumber} placeholder={t.customerNumber} />
+      <AppTextInput value={idNumber} onChangeText={setIdNumber} placeholder={t.idNumber} />
+      <AppTextInput value={phone} onChangeText={setPhone} placeholder={t.phoneOptional} keyboardType="phone-pad" />
       <View style={styles.actions}>
         <AppButton label={t.cancel} onPress={() => router.back()} secondary />
         <AppButton label={t.save} onPress={save} />

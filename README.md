@@ -5,12 +5,14 @@ A mobile-first Equb management MVP with:
 - Amharic / English UI toggle
 - **Dark / light theme** — a header toggler plus Light / Dark / System in Settings, persisted on device
 - 40 fictional demo members
+- **No-repeat lottery rotation** — draw one winner per monthly cycle, exclude previous winners until all active members have won, and retain a searchable draw history
+- Member records include a unique customer number and ID number; phone is optional. Older local records can be edited, and drawing is blocked until active members’ identities are completed
 - Dashboard totals driven by the financial engine
 - Local persistence on the device (Zustand + AsyncStorage)
-- Member list, search, and add-member form
+- Member list, search by name/customer number/ID/phone, and add-member form
 - Contribution records with pending / confirmed / rejected states
-- Payout list and a guarded approval helper
-- Unit tests for core collection and payment rules
+- Payout list and a guarded approval helper (lottery results do not authorize or move funds)
+- Unit tests for collection/payment rules, draw fairness, cycle progression, and rotation reset
 
 ## Architecture
 
@@ -23,10 +25,11 @@ app/                          # Expo Router routes (thin re-exports only)
   _layout.tsx                 # Root stack: hydration gate, theme-aware chrome
   index.tsx                   # "/" -> redirects to the (tabs) group
   (tabs)/
-    _layout.tsx               # Tab bar (Dashboard, Members, Payments, Payouts, Settings)
+    _layout.tsx               # Tab bar (Dashboard, Members, Draw, Payments, Payouts, Settings)
     index.tsx                 # Dashboard tab
-    members.tsx  payments.tsx  payouts.tsx  settings.tsx
+    members.tsx  draw.tsx  payments.tsx  payouts.tsx  settings.tsx
   add-member.tsx              # Modal route
+  edit-member.tsx             # Modal route for completing/correcting member identity
   record-payment.tsx          # Modal route
 
 src/
@@ -43,7 +46,7 @@ src/
                               # StatusBadge, ProgressBar, SegmentedControl, Notice, ThemeToggle
     layout/                   # AppHeader (brand + theme toggler), DemoBanner
   features/                   # One folder per feature: screens/ + components/ + index.ts
-    dashboard/  members/  payments/  payouts/  settings/
+    dashboard/  members/  draw/  payments/  payouts/  settings/
   hooks/
     useStoreHydration.ts      # Gates the UI until both stores rehydrate
 ```
@@ -55,6 +58,8 @@ Imports use the `@/*` alias for `src/*` (tsconfig `paths`, resolved by Metro).
 - `useEqubStore` persists under the **same AsyncStorage key and raw JSON shape**
   (`ethiopian-equb-state-v1`) the previous single-file app used, via a small
   storage adapter — existing installs keep their data across the refactor.
+- Legacy data is normalized on read: draw history/rotation defaults are added and older cycles receive a one-time best-effort roster snapshot from members active at migration time. Since prior versions did not save historical rosters, exact past membership cannot be reconstructed. The app never invents real customer or ID numbers; complete missing values in Members before drawing.
+- New cycles snapshot their participants. Adding a member updates the still-active cycle roster, but later membership changes do not alter completed-cycle collection targets.
 - `useSettingsStore` persists under `ethiopian-equb-settings-v1`.
 - Theme resolution: Settings stores `light | dark | system`; `useTheme()`
   resolves `system` against the OS color scheme and returns the active palette.
@@ -106,7 +111,7 @@ npm run typecheck
 Outstanding = 160,000 ETB.
 Collection progress = 20%.
 
-Pending contributions are excluded from confirmed totals. The sample payout is labelled as demo-only and must not be treated as a real approved transfer.
+Pending contributions are excluded from confirmed totals. The initial demo state has no draw winner or payout; drawing a winner does not authorize or move funds.
 
 ## Suggested next production milestones
 

@@ -16,11 +16,13 @@ export function createDemoState(): EqubState {
   const members = names.map((name, i) => ({
     id: `member-${i + 1}`,
     name,
+    customerNumber: `EQ-${String(i + 1).padStart(4, "0")}`,
+    idNumber: `DEMO-ID-${String(i + 1).padStart(4, "0")}`,
     phone: `09${String(10000000 + i * 13791).slice(0, 8)}`,
     joinedAt: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
     status: "active" as const,
   }));
-  const cycleId = "cycle-2026-10";
+  const cycleId = `cycle-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const dueDate = new Date(now.getFullYear(), now.getMonth(), 25).toISOString();
   const contributions = members.slice(0, 8).map((member, i) => ({
     id: `demo-payment-${i + 1}`,
@@ -44,17 +46,10 @@ export function createDemoState(): EqubState {
       dueDate,
       contributionAmount: 5000,
       status: "active",
-      recipientMemberId: members[0].id,
+      participantMemberIds: members.map((member) => member.id),
     }],
-    payouts: [{
-      id: "payout-demo-1",
-      cycleId,
-      recipientMemberId: members[0].id,
-      grossAmount: 200000,
-      deductions: 0,
-      netAmount: 200000,
-      status: "scheduled",
-      evidenceNote: "Demo only — not an actual transfer",
-    }],
+    payouts: [],
+    draws: [],
+    currentRotation: 1,
   };
 }

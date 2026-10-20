@@ -2,9 +2,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import {
+  advanceCycle as advanceCycleState,
   approvePayout,
   createDemoState,
+  drawWinner as drawWinnerState,
+  migratePersistedEqubState,
   recordContribution,
+  startNextRotation as startNextRotationState,
+  validateMemberIdentity,
   verifyContribution,
   type Contribution,
   type EqubState,
@@ -28,9 +33,20 @@ const legacyCompatibleStorage: StateStorage = {
     const raw = await AsyncStorage.getItem(name);
     if (!raw) return null;
     try {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object" && "state" in parsed) return raw; // already an envelope
-      return JSON.stringify({ state: { data: parsed }, version: 1 }); // legacy raw EqubState
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+      const parsedRecord = parsed as Record<string, unknown>;
+      const storedState = parsedRecord.state && typeof parsedRecord.state === "object"
+        ? parsedRecord.state as Record<string, unknown>
+        : undefined;
+      const hasEnvelope = Boolean(storedState && "data" in storedState);
+      const legacyData = hasEnvelope ? storedState?.data : parsed;
+      const migrated = migratePersistedEqubState(legacyData);
+      if (!migrated) return null;
+      if (hasEnvelope && storedState) {
+        return JSON.stringify({ ...parsedRecord, state: { ...storedState, data: migrated } });
+      }
+      return JSON.stringify({ state: { data: migrated }, version: 1 });
     } catch {
       return null;
     }
@@ -46,10 +62,14 @@ const legacyCompatibleStorage: StateStorage = {
 
 interface EqubStore {
   data: EqubState;
-  addMember: (name: string, phone: string) => Member;
+  addMember: (input: { name: string; customerNumber: string; idNumber: string; phone?: string }) => Member;
+  updateMember: (memberId: string, input: { name: string; customerNumber: string; idNumber: string; phone?: string }) => void;
   recordPayment: (input: { memberId: string; cycleId: string; amount: number; note?: string }) => void;
   verifyPayment: (contributionId: string, confirmed: boolean) => void;
   approvePayoutById: (payoutId: string) => void;
+  drawWinner: () => void;
+  advanceCycle: () => void;
+  startNextRotation: () => void;
   resetDemo: () => void;
 }
 
@@ -58,22 +78,67 @@ export const useEqubStore = create<EqubStore>()(
     (set, get) => ({
       data: createDemoState(),
 
-      addMember: (name, phone) => {
-        const trimmedName = name.trim();
-        const trimmedPhone = phone.trim();
-        if (!trimmedName || !trimmedPhone) throw new Error("Please enter a member name and phone number.");
-        if (get().data.members.some((m) => m.phone === trimmedPhone)) {
+      addMember: (input) => {
+        const name = input.name.trim();
+        const customerNumber = input.customerNumber.trim();
+        const idNumber = input.idNumber.trim();
+        const phone = input.phone?.trim() ?? "";
+        if (!name || !customerNumber || !idNumber) {
+          throw new Error("Name, customer number, and ID number are required.");
+        }
+        const existingData = get().data;
+        const members = existingData.members;
+        validateMemberIdentity(existingData, { customerNumber, idNumber });
+        if (phone && members.some((member) => member.phone.trim() === phone)) {
           throw new Error("A member with this phone number already exists.");
         }
+        let id = `member-${Date.now()}`;
+        let suffix = 2;
+        while (members.some((member) => member.id === id)) id = `member-${Date.now()}-${suffix++}`;
         const member: Member = {
-          id: `member-${Date.now()}`,
-          name: trimmedName,
-          phone: trimmedPhone,
+          id,
+          name,
+          customerNumber,
+          idNumber,
+          phone,
           joinedAt: new Date().toISOString(),
           status: "active",
         };
-        set((s) => ({ data: { ...s.data, members: [...s.data.members, member] } }));
+        set((s) => {
+          const activeIds = s.data.members.filter((existing) => existing.status === "active").map((existing) => existing.id);
+          const cycles = s.data.cycles.map((cycle) => {
+            if (cycle.status !== "active") return cycle;
+            const participantIds = cycle.participantMemberIds ?? activeIds;
+            return {
+              ...cycle,
+              participantMemberIds: participantIds.includes(member.id) ? participantIds : [...participantIds, member.id],
+            };
+          });
+          return { data: { ...s.data, members: [...s.data.members, member], cycles } };
+        });
         return member;
+      },
+
+      updateMember: (memberId, input) => {
+        const currentState = get().data;
+        const name = input.name.trim();
+        const customerNumber = input.customerNumber.trim();
+        const idNumber = input.idNumber.trim();
+        const phone = input.phone?.trim() ?? "";
+        if (!currentState.members.some((member) => member.id === memberId)) throw new Error("Member not found.");
+        if (!name) throw new Error("Member name is required.");
+        validateMemberIdentity(currentState, { customerNumber, idNumber }, memberId);
+        if (phone && currentState.members.some((member) => member.id !== memberId && member.phone.trim() === phone)) {
+          throw new Error("A member with this phone number already exists.");
+        }
+        set((state) => ({
+          data: {
+            ...state.data,
+            members: state.data.members.map((member) => member.id === memberId
+              ? { ...member, name, customerNumber, idNumber, phone }
+              : member),
+          },
+        }));
       },
 
       recordPayment: (input) =>
@@ -90,6 +155,12 @@ export const useEqubStore = create<EqubStore>()(
         set((s) => ({ data: verifyContribution(s.data, contributionId, confirmed) })),
 
       approvePayoutById: (payoutId) => set((s) => ({ data: approvePayout(s.data, payoutId) })),
+
+      drawWinner: () => set((s) => ({ data: drawWinnerState(s.data) })),
+
+      advanceCycle: () => set((s) => ({ data: advanceCycleState(s.data) })),
+
+      startNextRotation: () => set((s) => ({ data: startNextRotationState(s.data) })),
 
       resetDemo: () => set({ data: createDemoState() }),
     }),
