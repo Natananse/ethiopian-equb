@@ -13,6 +13,7 @@ export function PayoutsScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const data = useEqubStore((s) => s.data);
+  const role = useEqubStore((s) => s.role);
   const approvePayoutById = useEqubStore((s) => s.approvePayoutById);
   const drawnCycles = [...data.cycles].filter((cycle) => cycle.recipientMemberId).reverse();
 
@@ -53,7 +54,9 @@ export function PayoutsScreen() {
               return (
                 <Card key={cycle.id}>
                   <Text style={[styles.winnerLabel, { color: colors.primary }]}>{t.cycle}: {cycle.label} · {t.drawnWinner}</Text>
-                  <Text style={[styles.winnerName, { color: colors.text }]}>{winner?.name ?? t.noIdentity}</Text>
+                  <Text style={[styles.winnerName, { color: colors.text }]}>
+                    {winner?.name ?? data.draws?.find((draw) => draw.winnerMemberId === cycle.recipientMemberId)?.winnerName ?? t.noIdentity}
+                  </Text>
                   <Text style={[styles.winnerMeta, { color: colors.muted }]}>
                     {t.customerNumber}: {winner?.customerNumber ?? t.noIdentity} · {t.idNumber}: {winner?.idNumber ?? t.noIdentity}
                   </Text>
@@ -69,7 +72,7 @@ export function PayoutsScreen() {
             payout={item}
             cycleLabel={data.cycles.find((c) => c.id === item.cycleId)?.label ?? item.cycleId}
             recipientName={memberName(data, item.recipientMemberId)}
-            onApprove={approve}
+            onApprove={role === "admin" ? approve : undefined}
           />
         )}
       />

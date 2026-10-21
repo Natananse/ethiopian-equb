@@ -13,6 +13,7 @@ export function DashboardScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const data = useEqubStore((s) => s.data);
+  const role = useEqubStore((s) => s.role);
 
   const cycle = selectActiveCycle(data);
   const cycleId = cycle?.id ?? "";
@@ -21,8 +22,10 @@ export function DashboardScreen() {
   const recent = data.contributions.slice(-5).reverse();
 
   const quickActions: { label: string; icon: ComponentProps<typeof Ionicons>["name"]; onPress: () => void }[] = [
-    { label: t.drawLottery, icon: "sparkles-outline", onPress: () => router.push("/draw") },
-    { label: t.addMember, icon: "person-add-outline", onPress: () => router.push("/add-member") },
+    ...(role === "admin" ? [
+      { label: t.drawLottery, icon: "sparkles-outline" as const, onPress: () => router.push("/draw") },
+      { label: t.addMember, icon: "person-add-outline" as const, onPress: () => router.push("/add-member") },
+    ] : [{ label: t.drawLottery, icon: "sparkles-outline" as const, onPress: () => router.push("/draw") }]),
     { label: t.recordPayment, icon: "card-outline", onPress: () => router.push("/record-payment") },
     { label: t.members, icon: "people-outline", onPress: () => router.push("/members") },
     { label: t.payouts, icon: "trophy-outline", onPress: () => router.push("/payouts") },

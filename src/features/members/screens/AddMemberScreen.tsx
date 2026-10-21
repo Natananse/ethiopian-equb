@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,11 +12,14 @@ import { spacing, useTheme } from "@/theme";
 export function AddMemberScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const role = useEqubStore((s) => s.role);
   const addMember = useEqubStore((s) => s.addMember);
   const [name, setName] = useState("");
   const [customerNumber, setCustomerNumber] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [phone, setPhone] = useState("");
+
+  if (role !== "admin") return <Redirect href="/(tabs)" />;
 
   const save = async () => {
     if (!name.trim() || !customerNumber.trim() || !idNumber.trim()) {

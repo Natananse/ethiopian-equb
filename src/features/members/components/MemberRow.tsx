@@ -10,11 +10,13 @@ interface Props {
   paid: boolean;
   /** Amount to show on the right: the confirmed amount, or the expected contribution. */
   amountLabel: string;
-  onEdit: () => void;
+  onEdit?: () => void;
   identityIssue: boolean;
+  roleLabel?: string;
+  onRoleChange?: () => void;
 }
 
-export function MemberRow({ member, paid, amountLabel, onEdit, identityIssue }: Props) {
+export function MemberRow({ member, paid, amountLabel, onEdit, identityIssue, roleLabel, onRoleChange }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   return (
@@ -30,10 +32,18 @@ export function MemberRow({ member, paid, amountLabel, onEdit, identityIssue }: 
         <Text style={[styles.meta, { color: colors.muted }]}>
           {t.idNumber}: {member.idNumber ?? t.noIdentity}{member.phone ? ` · ${member.phone}` : ""}
         </Text>
-        <Pressable onPress={onEdit} accessibilityRole="button" accessibilityLabel={t.edit} hitSlop={8} style={styles.editButton}>
-          <Text style={[styles.edit, { color: colors.primary }]}>{t.edit}</Text>
-          <Ionicons name="create-outline" size={14} color={colors.primary} />
-        </Pressable>
+        {onEdit ? (
+          <Pressable onPress={onEdit} accessibilityRole="button" accessibilityLabel={t.edit} hitSlop={8} style={styles.editButton}>
+            <Text style={[styles.edit, { color: colors.primary }]}>{t.edit}</Text>
+            <Ionicons name="create-outline" size={14} color={colors.primary} />
+          </Pressable>
+        ) : null}
+        {onRoleChange ? (
+          <Pressable onPress={onRoleChange} accessibilityRole="button" hitSlop={8} style={styles.editButton}>
+            <Text style={[styles.edit, { color: colors.primary }]}>{roleLabel}</Text>
+            <Ionicons name="shield-outline" size={14} color={colors.primary} />
+          </Pressable>
+        ) : null}
         {identityIssue ? <Text style={[styles.issue, { color: colors.danger }]}>{t.identityIssueTag}</Text> : null}
       </View>
       <View style={styles.right}>

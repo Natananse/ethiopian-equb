@@ -23,6 +23,13 @@ import { equbStateValidator } from "./schema";
 
 const recordKinds = ["member", "contribution", "cycle", "payout", "draw"] as const;
 type RecordKind = (typeof recordKinds)[number];
+type AccessRole = "admin" | "member";
+interface AccessContext {
+  equb: Doc<"equbs">;
+  role: AccessRole;
+  memberId: string | null;
+  tokenIdentifier: string;
+}
 type RecordData =
   | ({ kind: "member" } & Member)
   | ({ kind: "contribution" } & Contribution)
@@ -52,6 +59,65 @@ async function getOwnedEqub(ctx: QueryCtx | MutationCtx, owner: string): Promise
     .unique();
   if (!equb) throw new ConvexError("Your Equb account has not been initialized.");
   return equb;
+}
+
+async function getAccess(ctx: QueryCtx | MutationCtx): Promise<AccessContext | null> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new ConvexError("Sign in is required.");
+
+  const ownedEqub = await ctx.db
+    .query("equbs")
+    .withIndex("by_owner", (q) => q.eq("ownerTokenIdentifier", identity.tokenIdentifier))
+    .unique();
+  if (ownedEqub) {
+    return { equb: ownedEqub, role: "admin", memberId: null, tokenIdentifier: identity.tokenIdentifier };
+  }
+
+  const membership = await ctx.db
+    .query("memberships")
+    .withIndex("by_token_identifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+    .unique();
+  if (!membership) return null;
+
+  const equb = await ctx.db.get(membership.equbId);
+  if (!equb) throw new ConvexError("This Equb membership is no longer valid.");
+  const memberDocs = await ctx.db
+    .query("records")
+    .withIndex("by_equb_and_kind", (q) => q.eq("equbId", equb._id).eq("kind", "member"))
+    .take(MAX_RECORDS.member + 1);
+  if (memberDocs.length > MAX_RECORDS.member) {
+    throw new ConvexError("This Equb has reached the supported member record limit.");
+  }
+  const member = memberDocs.find((doc) => doc.record.kind === "member" && doc.record.id === membership.memberId);
+  if (!member || member.record.kind !== "member" || member.record.status !== "active") {
+    throw new ConvexError("This member account is inactive.");
+  }
+
+  return {
+    equb,
+    role: membership.role,
+    memberId: membership.memberId,
+    tokenIdentifier: identity.tokenIdentifier,
+  };
+}
+
+async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<AccessContext> {
+  const access = await getAccess(ctx);
+  if (!access) throw new ConvexError("You are not a member of an Equb.");
+  if (access.role !== "admin") throw new ConvexError("Administrator access is required.");
+  return access;
+}
+
+async function createJoinCode(ctx: MutationCtx): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = crypto.randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase();
+    const existing = await ctx.db
+      .query("equbs")
+      .withIndex("by_join_code", (q) => q.eq("joinCode", code))
+      .unique();
+    if (!existing) return code;
+  }
+  throw new ConvexError("Could not generate a unique group code. Please try again.");
 }
 
 async function readRecords(ctx: QueryCtx | MutationCtx, equbId: Id<"equbs">): Promise<StoredRecords> {
@@ -162,13 +228,17 @@ async function saveState(
 async function changeState(
   ctx: MutationCtx,
   transform: (state: EqubState) => EqubState,
+  memberScope?: string,
 ): Promise<EqubState> {
-  const owner = await ownerTokenIdentifier(ctx);
-  const equb = await getOwnedEqub(ctx, owner);
-  const stored = await readRecords(ctx, equb._id);
-  const state = recordsToState(equb, stored);
+  const access = await getAccess(ctx);
+  if (!access) throw new ConvexError("You are not a member of an Equb.");
+  if (access.role !== "admin" && (!memberScope || access.memberId !== memberScope)) {
+    throw new ConvexError("You do not have permission to perform this action.");
+  }
+  const stored = await readRecords(ctx, access.equb._id);
+  const state = recordsToState(access.equb, stored);
   const updated = transform(state);
-  await saveState(ctx, equb, stored, updated);
+  await saveState(ctx, access.equb, stored, updated);
   return updated;
 }
 
@@ -177,17 +247,26 @@ export const ensureEqub = mutation({
   returns: v.id("equbs"),
   handler: async (ctx) => {
     const owner = await ownerTokenIdentifier(ctx);
+    const membership = await ctx.db
+      .query("memberships")
+      .withIndex("by_token_identifier", (q) => q.eq("tokenIdentifier", owner))
+      .unique();
+    if (membership) throw new ConvexError("A member account cannot create another Equb.");
     const existing = await ctx.db
       .query("equbs")
       .withIndex("by_owner", (q) => q.eq("ownerTokenIdentifier", owner))
       .unique();
-    if (existing) return existing._id;
+    if (existing) {
+      if (!existing.joinCode) await ctx.db.patch(existing._id, { joinCode: await createJoinCode(ctx) });
+      return existing._id;
+    }
 
     const now = new Date();
     const cycleId = `cycle-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const dueDate = new Date(now.getFullYear(), now.getMonth(), 25).toISOString();
     const equbId = await ctx.db.insert("equbs", {
       ownerTokenIdentifier: owner,
+      joinCode: await createJoinCode(ctx),
       groupName: "My Equb",
       currency: "ETB",
       contributionAmount: 5000,
@@ -217,17 +296,55 @@ export const getState = query({
   args: {},
   returns: v.union(
     v.null(),
-    v.object({ state: equbStateValidator, importedFromDevice: v.boolean() }),
+    v.object({
+      state: equbStateValidator,
+      importedFromDevice: v.boolean(),
+      role: v.union(v.literal("admin"), v.literal("member")),
+      memberId: v.union(v.null(), v.string()),
+      joinCode: v.union(v.null(), v.string()),
+      memberRoles: v.array(v.object({
+        memberId: v.string(),
+        role: v.union(v.literal("admin"), v.literal("member")),
+      })),
+    }),
   ),
   handler: async (ctx) => {
-    const owner = await ownerTokenIdentifier(ctx);
-    const equb = await ctx.db
-      .query("equbs")
-      .withIndex("by_owner", (q) => q.eq("ownerTokenIdentifier", owner))
-      .unique();
-    if (!equb) return null;
-    const stored = await readRecords(ctx, equb._id);
-    return { state: recordsToState(equb, stored), importedFromDevice: equb.importedFromDevice };
+    const access = await getAccess(ctx);
+    if (!access) return null;
+    const stored = await readRecords(ctx, access.equb._id);
+    const state = recordsToState(access.equb, stored);
+    const memberships = access.role === "admin"
+      ? await ctx.db
+        .query("memberships")
+        .withIndex("by_equb", (q) => q.eq("equbId", access.equb._id))
+        .take(MAX_RECORDS.member + 1)
+      : [];
+    if (memberships.length > MAX_RECORDS.member) {
+      throw new ConvexError("This Equb has reached the supported membership limit.");
+    }
+
+    if (access.role === "member" && access.memberId) {
+      state.members = state.members.filter((member) => member.id === access.memberId);
+      state.contributions = state.contributions.filter((payment) => payment.memberId === access.memberId);
+      state.cycles = state.cycles.map((cycle) => ({
+        ...cycle,
+        participantMemberIds: (cycle.participantMemberIds ?? []).filter((id) => id === access.memberId),
+      }));
+      state.draws = (state.draws ?? []).map((draw) =>
+        draw.winnerMemberId !== access.memberId
+          ? { ...draw, winnerCustomerNumber: "", winnerIdNumber: "" }
+          : draw,
+      );
+    }
+
+    return {
+      state,
+      importedFromDevice: access.equb.importedFromDevice,
+      role: access.role,
+      memberId: access.memberId,
+      joinCode: access.role === "admin" ? access.equb.joinCode ?? null : null,
+      memberRoles: memberships.map(({ memberId, role }) => ({ memberId, role })),
+    };
   },
 });
 
@@ -235,8 +352,8 @@ export const importDeviceState = mutation({
   args: { state: equbStateValidator },
   returns: v.null(),
   handler: async (ctx, { state }) => {
-    const owner = await ownerTokenIdentifier(ctx);
-    const equb = await getOwnedEqub(ctx, owner);
+    const access = await requireAdmin(ctx);
+    const equb = access.equb;
     if (equb.importedFromDevice) throw new ConvexError("This device's data has already been imported.");
 
     const stored = await readRecords(ctx, equb._id);
@@ -247,6 +364,100 @@ export const importDeviceState = mutation({
     await saveState(ctx, equb, stored, state);
     await ctx.db.patch(equb._id, { importedFromDevice: true });
     return null;
+  },
+});
+
+export const joinEqub = mutation({
+  args: {
+    joinCode: v.string(),
+    customerNumber: v.string(),
+    idNumber: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Sign in is required.");
+
+    const owned = await ctx.db
+      .query("equbs")
+      .withIndex("by_owner", (q) => q.eq("ownerTokenIdentifier", identity.tokenIdentifier))
+      .unique();
+    const existingMembership = await ctx.db
+      .query("memberships")
+      .withIndex("by_token_identifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+      .unique();
+    if (owned || existingMembership) throw new ConvexError("This account is already connected to an Equb.");
+
+    const code = args.joinCode.trim().toUpperCase();
+    const customerNumber = args.customerNumber.trim();
+    const idNumber = args.idNumber.trim();
+    if (!code || !customerNumber || !idNumber) {
+      throw new ConvexError("Group code, customer number, and ID number are required.");
+    }
+    const equb = await ctx.db
+      .query("equbs")
+      .withIndex("by_join_code", (q) => q.eq("joinCode", code))
+      .unique();
+    if (!equb) throw new ConvexError("The group code or member details are invalid.");
+
+    const memberDocs = await ctx.db
+      .query("records")
+      .withIndex("by_equb_and_kind", (q) => q.eq("equbId", equb._id).eq("kind", "member"))
+      .take(MAX_RECORDS.member + 1);
+    if (memberDocs.length > MAX_RECORDS.member) {
+      throw new ConvexError("This Equb has reached the supported member record limit.");
+    }
+    const match = memberDocs.find((doc) =>
+      doc.record.kind === "member" &&
+      doc.record.status === "active" &&
+      doc.record.customerNumber?.trim() === customerNumber &&
+      doc.record.idNumber?.trim() === idNumber,
+    );
+    if (!match || match.record.kind !== "member") {
+      throw new ConvexError("The group code or member details are invalid.");
+    }
+    const existingLink = await ctx.db
+      .query("memberships")
+      .withIndex("by_equb_and_member", (q) => q.eq("equbId", equb._id).eq("memberId", match.record.id))
+      .unique();
+    if (existingLink) throw new ConvexError("This member already has an account linked.");
+
+    await ctx.db.insert("memberships", {
+      equbId: equb._id,
+      tokenIdentifier: identity.tokenIdentifier,
+      memberId: match.record.id,
+      role: "member",
+    });
+    return null;
+  },
+});
+
+export const setMemberRole = mutation({
+  args: {
+    memberId: v.string(),
+    role: v.union(v.literal("admin"), v.literal("member")),
+  },
+  returns: v.null(),
+  handler: async (ctx, { memberId, role }) => {
+    const access = await requireAdmin(ctx);
+    const membership = await ctx.db
+      .query("memberships")
+      .withIndex("by_equb_and_member", (q) => q.eq("equbId", access.equb._id).eq("memberId", memberId))
+      .unique();
+    if (!membership) throw new ConvexError("This member has not linked an account yet.");
+    await ctx.db.patch(membership._id, { role });
+    return null;
+  },
+});
+
+export const rotateJoinCode = mutation({
+  args: {},
+  returns: v.string(),
+  handler: async (ctx) => {
+    const access = await requireAdmin(ctx);
+    const joinCode = await createJoinCode(ctx);
+    await ctx.db.patch(access.equb._id, { joinCode });
+    return joinCode;
   },
 });
 
@@ -333,12 +544,16 @@ export const recordPayment = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await changeState(ctx, (state) => recordContribution(state, {
-      memberId: args.memberId,
-      cycleId: args.cycleId,
-      amount: args.amount,
-      note: args.note?.trim() || "Entered in app",
-    }));
+    await changeState(
+      ctx,
+      (state) => recordContribution(state, {
+        memberId: args.memberId,
+        cycleId: args.cycleId,
+        amount: args.amount,
+        note: args.note?.trim() || "Entered in app",
+      }),
+      args.memberId,
+    );
     return null;
   },
 });

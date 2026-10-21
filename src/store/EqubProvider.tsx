@@ -12,6 +12,11 @@ export const EQUB_STORAGE_KEY = "ethiopian-equb-state-v1";
 interface EqubStore {
   data: EqubState;
   ready: boolean;
+  accessChecked: boolean;
+  role: "admin" | "member" | null;
+  memberId: string | null;
+  joinCode: string | null;
+  memberRoles: { memberId: string; role: "admin" | "member" }[];
   addMember: (input: { name: string; customerNumber: string; idNumber: string; phone?: string }) => Promise<void>;
   updateMember: (memberId: string, input: { name: string; customerNumber: string; idNumber: string; phone?: string }) => Promise<void>;
   recordPayment: (input: { memberId: string; cycleId: string; amount: number; note?: string }) => Promise<void>;
@@ -20,6 +25,8 @@ interface EqubStore {
   drawWinner: () => Promise<void>;
   advanceCycle: () => Promise<void>;
   startNextRotation: () => Promise<void>;
+  setMemberRole: (memberId: string, role: "admin" | "member") => Promise<void>;
+  rotateJoinCode: () => Promise<void>;
 }
 
 const notReady = async () => {
@@ -42,6 +49,11 @@ const emptyEqubState: EqubState = {
 export const useEqubStore = create<EqubStore>(() => ({
   data: emptyEqubState,
   ready: false,
+  accessChecked: false,
+  role: null,
+  memberId: null,
+  joinCode: null,
+  memberRoles: [],
   addMember: notReady,
   updateMember: notReady,
   recordPayment: notReady,
@@ -50,6 +62,8 @@ export const useEqubStore = create<EqubStore>(() => ({
   drawWinner: notReady,
   advanceCycle: notReady,
   startNextRotation: notReady,
+  setMemberRole: notReady,
+  rotateJoinCode: notReady,
 }));
 
 function withoutDemoSeed(state: EqubState): EqubState {
@@ -81,7 +95,6 @@ function withoutDemoSeed(state: EqubState): EqubState {
 
 export function EqubProvider({ children }: { children: ReactNode }) {
   const result = useQuery(api.equb.getState, {});
-  const ensureEqub = useMutation(api.equb.ensureEqub);
   const importDeviceState = useMutation(api.equb.importDeviceState);
   const addMember = useMutation(api.equb.addMember);
   const updateMember = useMutation(api.equb.updateMember);
@@ -91,27 +104,22 @@ export function EqubProvider({ children }: { children: ReactNode }) {
   const drawWinner = useMutation(api.equb.drawWinnerForCycle);
   const advanceCycle = useMutation(api.equb.advanceCycleForEqub);
   const startNextRotation = useMutation(api.equb.startNextRotationForEqub);
+  const setMemberRole = useMutation(api.equb.setMemberRole);
+  const rotateJoinCode = useMutation(api.equb.rotateJoinCode);
   const [migrationReady, setMigrationReady] = useState(false);
   const storeReady = useEqubStore((state) => state.ready);
   const [migrationError, setMigrationError] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState(false);
-  const [initializationError, setInitializationError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (result !== null || initialized || initializationError) return;
-    setInitialized(true);
-    void ensureEqub().catch((error: unknown) => {
-      setInitialized(false);
-      setInitializationError(error instanceof Error ? error.message : String(error));
-    });
-  }, [ensureEqub, initialized, initializationError, result]);
-
-  useEffect(() => {
-    if (!result || migrationReady || migrationError) return;
+    if (result === undefined || migrationReady || migrationError) return;
+    if (result === null) {
+      setMigrationReady(true);
+      return;
+    }
     void (async () => {
       try {
-        const raw = await AsyncStorage.getItem(EQUB_STORAGE_KEY);
-        if (raw) {
+        const raw = result.role === "admin" ? await AsyncStorage.getItem(EQUB_STORAGE_KEY) : null;
+        if (raw && result.role === "admin") {
           const parsed: unknown = JSON.parse(raw);
           const envelope = parsed && typeof parsed === "object" && "state" in parsed
             ? (parsed as { state?: { data?: unknown } }).state?.data
@@ -132,10 +140,15 @@ export function EqubProvider({ children }: { children: ReactNode }) {
   }, [importDeviceState, migrationError, migrationReady, result]);
 
   useEffect(() => {
-    if (!result || !migrationReady) return;
+    if (result === undefined || result === null || !migrationReady) return;
     useEqubStore.setState({
       data: result.state,
       ready: true,
+      accessChecked: true,
+      role: result.role,
+      memberId: result.memberId,
+      joinCode: result.joinCode,
+      memberRoles: result.memberRoles,
       addMember: async (input) => { await addMember(input); },
       updateMember: async (memberId, input) => { await updateMember({ memberId, ...input }); },
       recordPayment: async (input) => { await recordPayment(input); },
@@ -144,6 +157,8 @@ export function EqubProvider({ children }: { children: ReactNode }) {
       drawWinner: async () => { await drawWinner({}); },
       advanceCycle: async () => { await advanceCycle({}); },
       startNextRotation: async () => { await startNextRotation({}); },
+      setMemberRole: async (memberId, role) => { await setMemberRole({ memberId, role }); },
+      rotateJoinCode: async () => { await rotateJoinCode({}); },
     });
   }, [
     addMember,
@@ -154,18 +169,35 @@ export function EqubProvider({ children }: { children: ReactNode }) {
     recordPayment,
     result,
     startNextRotation,
+    setMemberRole,
+    rotateJoinCode,
     updateMember,
     verifyPayment,
   ]);
 
   useLayoutEffect(() => {
-    if (!result) useEqubStore.setState({ data: emptyEqubState, ready: false });
+    if (result === undefined || result === null) {
+      useEqubStore.setState({
+        data: emptyEqubState,
+        ready: false,
+        accessChecked: result !== undefined,
+        role: null,
+        memberId: null,
+        joinCode: null,
+        memberRoles: [],
+      });
+    }
   }, [result]);
 
   useEffect(() => () => {
     useEqubStore.setState({
       data: emptyEqubState,
       ready: false,
+      accessChecked: false,
+      role: null,
+      memberId: null,
+      joinCode: null,
+      memberRoles: [],
       addMember: notReady,
       updateMember: notReady,
       recordPayment: notReady,
@@ -174,18 +206,11 @@ export function EqubProvider({ children }: { children: ReactNode }) {
       drawWinner: notReady,
       advanceCycle: notReady,
       startNextRotation: notReady,
+      setMemberRole: notReady,
+      rotateJoinCode: notReady,
     });
   }, []);
 
-  if (initializationError) {
-    return (
-      <View style={styles.status}>
-        <Text style={styles.errorTitle}>Could not initialize Equb</Text>
-        <Text style={styles.errorMessage}>{initializationError}</Text>
-        <Text accessibilityRole="button" onPress={() => setInitializationError(null)} style={styles.retry}>Retry</Text>
-      </View>
-    );
-  }
   if (migrationError) {
     return (
       <View style={styles.status}>
@@ -195,7 +220,16 @@ export function EqubProvider({ children }: { children: ReactNode }) {
       </View>
     );
   }
-  if (!result || !migrationReady || !storeReady) {
+  if (result === undefined) {
+    return (
+      <View style={styles.status}>
+        <ActivityIndicator />
+        <Text style={styles.errorMessage}>Loading your Equb data…</Text>
+      </View>
+    );
+  }
+  if (result === null) return <>{children}</>;
+  if (!migrationReady || !storeReady) {
     return (
       <View style={styles.status}>
         <ActivityIndicator />

@@ -5,7 +5,9 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 import { AppButton, AppTextInput, Notice, Screen } from "@/components/ui";
 import { membersWithIdentityIssues, money } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
+import { showToast } from "@/core/feedback";
 import { selectActiveCycle, selectConfirmedContribution, useEqubStore } from "@/store";
+import { useFeedbackStore } from "@/store/useFeedbackStore";
 import { spacing, useTheme } from "@/theme";
 import { MemberRow } from "../components/MemberRow";
 
@@ -13,16 +15,40 @@ export function MembersScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const data = useEqubStore((s) => s.data);
+  const role = useEqubStore((s) => s.role);
+  const memberRoles = useEqubStore((s) => s.memberRoles);
+  const setMemberRole = useEqubStore((s) => s.setMemberRole);
   const [query, setQuery] = useState("");
 
   const cycleId = selectActiveCycle(data)?.id ?? "";
   const identityIssueMembers = membersWithIdentityIssues(data);
   const identityIncompleteCount = identityIssueMembers.length;
   const identityIssueIds = new Set(identityIssueMembers.map((member) => member.id));
+  const linkedRoles = new Map(memberRoles.map((item) => [item.memberId, item.role]));
   const filtered = useMemo(
     () => data.members.filter((m) => `${m.name} ${m.customerNumber ?? ""} ${m.idNumber ?? ""} ${m.phone}`.toLowerCase().includes(query.toLowerCase())),
     [data.members, query]
   );
+
+  const changeRole = async (memberId: string) => {
+    const currentRole = linkedRoles.get(memberId);
+    if (!currentRole) return;
+    const nextRole = currentRole === "admin" ? "member" : "admin";
+    const confirmed = await useFeedbackStore.getState().requestConfirmation({
+      title: nextRole === "admin" ? t.promoteAdmin : t.setMember,
+      message: `${t.name}: ${data.members.find((member) => member.id === memberId)?.name ?? ""}`,
+      confirmLabel: nextRole === "admin" ? t.promoteAdmin : t.setMember,
+      cancelLabel: t.cancel,
+      icon: "shield-outline",
+    });
+    if (!confirmed) return;
+    try {
+      await setMemberRole(memberId, nextRole);
+      showToast("success", nextRole === "admin" ? t.promoteAdmin : t.setMember);
+    } catch (error) {
+      showToast("error", t.actionFailed, error instanceof Error ? error.message : String(error));
+    }
+  };
 
   return (
     <Screen>
@@ -37,9 +63,11 @@ export function MembersScreen() {
                 <Text style={[styles.pageTitle, { color: colors.text }]}>{t.allMembers}</Text>
                 <Text style={[styles.subtitle, { color: colors.muted }]}>{`${data.members.length} ${t.memberCount.toLowerCase()}`}</Text>
               </View>
-              <View style={styles.addButton}>
-                <AppButton label={t.add} icon="add" onPress={() => router.push("/add-member")} />
-              </View>
+              {role === "admin" ? (
+                <View style={styles.addButton}>
+                  <AppButton label={t.add} icon="add" onPress={() => router.push("/add-member")} />
+                </View>
+              ) : null}
             </View>
             <View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Ionicons name="search-outline" size={19} color={colors.muted} />
@@ -68,8 +96,12 @@ export function MembersScreen() {
               member={item}
               paid={Boolean(confirmed)}
               amountLabel={money(confirmed?.amount ?? data.contributionAmount)}
-              onEdit={() => router.push({ pathname: "/edit-member", params: { memberId: item.id } })}
+              onEdit={role === "admin" ? () => router.push({ pathname: "/edit-member", params: { memberId: item.id } }) : undefined}
               identityIssue={identityIssueIds.has(item.id)}
+              roleLabel={role === "admin" && linkedRoles.has(item.id)
+                ? linkedRoles.get(item.id) === "admin" ? t.setMember : t.promoteAdmin
+                : undefined}
+              onRoleChange={role === "admin" && linkedRoles.has(item.id) ? () => changeRole(item.id) : undefined}
             />
           );
         }}

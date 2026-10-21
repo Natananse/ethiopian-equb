@@ -18,6 +18,7 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
   const { colors } = useTheme();
   const { t } = useTranslation();
   const data = useEqubStore((s) => s.data);
+  const role = useEqubStore((s) => s.role);
   const verifyPayment = useEqubStore((s) => s.verifyPayment);
   const approvePayoutById = useEqubStore((s) => s.approvePayoutById);
   const [section, setSection] = useState<FinanceSection>(initialSection);
@@ -69,7 +70,7 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
               <Ionicons name="wallet-outline" size={21} color={colors.primary} />
             </View>
             <Text style={[styles.pageTitle, { color: colors.text }]}>{t.finance}</Text>
-            {section === "payments" ? (
+            {section === "payments" && role ? (
               <View style={styles.addButton}>
                 <AppButton label={t.add} icon="add" onPress={() => router.push("/record-payment")} />
               </View>
@@ -98,7 +99,7 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
                   memberName={memberName(data, item.memberId)}
                   cycleLabel={data.cycles.find((cycle) => cycle.id === item.cycleId)?.label ?? item.cycleId}
                 >
-                  {item.status === "pending" ? (
+                  {role === "admin" && item.status === "pending" ? (
                     <View style={styles.actions}>
                       <AppButton label={t.verify} onPress={() => verify(item, true)} />
                       <AppButton label={t.reject} onPress={() => verify(item, false)} secondary />
@@ -116,7 +117,9 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
               return (
                 <Card key={cycle.id}>
                   <Text style={[styles.winnerLabel, { color: colors.primary }]}>{t.cycle}: {cycle.label} · {t.drawnWinner}</Text>
-                  <Text style={[styles.winnerName, { color: colors.text }]}>{winner?.name ?? t.noIdentity}</Text>
+                  <Text style={[styles.winnerName, { color: colors.text }]}>
+                    {winner?.name ?? data.draws?.find((draw) => draw.winnerMemberId === cycle.recipientMemberId)?.winnerName ?? t.noIdentity}
+                  </Text>
                   <Text style={[styles.winnerMeta, { color: colors.muted }]}>
                     {t.customerNumber}: {winner?.customerNumber ?? t.noIdentity} · {t.idNumber}: {winner?.idNumber ?? t.noIdentity}
                   </Text>
@@ -133,7 +136,7 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
                   payout={item}
                   cycleLabel={data.cycles.find((cycle) => cycle.id === item.cycleId)?.label ?? item.cycleId}
                   recipientName={memberName(data, item.recipientMemberId)}
-                  onApprove={approve}
+                  onApprove={role === "admin" ? approve : undefined}
                 />
               ))
             )}

@@ -10,6 +10,7 @@ const payoutStatus = v.union(
   v.literal("blocked"),
 );
 const cycleStatus = v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed"));
+const accessRole = v.union(v.literal("admin"), v.literal("member"));
 
 const memberRecord = v.object({
   kind: v.literal("member"),
@@ -134,13 +135,25 @@ export const equbStateValidator = v.object({
 export default defineSchema({
   equbs: defineTable({
     ownerTokenIdentifier: v.string(),
+    joinCode: v.optional(v.string()),
     groupName: v.string(),
     currency: v.literal("ETB"),
     contributionAmount: v.number(),
     frequency: v.literal("monthly"),
     currentRotation: v.number(),
     importedFromDevice: v.boolean(),
-  }).index("by_owner", ["ownerTokenIdentifier"]),
+  })
+    .index("by_owner", ["ownerTokenIdentifier"])
+    .index("by_join_code", ["joinCode"]),
+  memberships: defineTable({
+    equbId: v.id("equbs"),
+    tokenIdentifier: v.string(),
+    memberId: v.string(),
+    role: accessRole,
+  })
+    .index("by_token_identifier", ["tokenIdentifier"])
+    .index("by_equb_and_member", ["equbId", "memberId"])
+    .index("by_equb", ["equbId"]),
   records: defineTable({
     equbId: v.id("equbs"),
     kind: v.union(

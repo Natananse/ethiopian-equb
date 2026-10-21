@@ -14,6 +14,8 @@ export function RecordPaymentScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const data = useEqubStore((s) => s.data);
+  const role = useEqubStore((s) => s.role);
+  const memberId = useEqubStore((s) => s.memberId);
   const recordPayment = useEqubStore((s) => s.recordPayment);
 
   const activeCycle = selectActiveCycle(data);
@@ -26,7 +28,8 @@ export function RecordPaymentScreen() {
   const [note, setNote] = useState("");
 
   const submit = async () => {
-    if (!cycleId || !selectedMember) {
+    const targetMemberId = role === "admin" ? selectedMember : memberId ?? "";
+    if (!cycleId || !targetMemberId) {
       showToast("error", "Choose a member", t.selectMember);
       return;
     }
@@ -36,7 +39,7 @@ export function RecordPaymentScreen() {
       return;
     }
     try {
-      await recordPayment({ memberId: selectedMember, cycleId, amount: value, note });
+      await recordPayment({ memberId: targetMemberId, cycleId, amount: value, note });
     } catch (error) {
       showToast("error", "Could not complete action", error instanceof Error ? error.message : "Unknown error");
       return;
@@ -64,13 +67,15 @@ export function RecordPaymentScreen() {
           <Text style={[styles.cycleAmount, { color: colors.primary }]}>{money(activeCycle.contributionAmount)}</Text>
         </Card>
       ) : <Notice>{t.noActiveCycle}</Notice>}
-      <View style={styles.sectionHeading}>
-        <Text style={[styles.label, { color: colors.text }]}>{t.selectMember}</Text>
-        <Text style={[styles.count, { color: colors.muted }]}>{participants.length}</Text>
-      </View>
-      {participants.length === 0 ? <Notice>{t.noActiveMembers}</Notice> : null}
-      <View style={styles.memberList}>
-        {participants.map((m) => (
+      {role === "admin" ? (
+        <>
+          <View style={styles.sectionHeading}>
+            <Text style={[styles.label, { color: colors.text }]}>{t.selectMember}</Text>
+            <Text style={[styles.count, { color: colors.muted }]}>{participants.length}</Text>
+          </View>
+          {participants.length === 0 ? <Notice>{t.noActiveMembers}</Notice> : null}
+          <View style={styles.memberList}>
+            {participants.map((m) => (
             <Pressable
               key={m.id}
               onPress={() => setSelectedMember(m.id)}
@@ -98,7 +103,11 @@ export function RecordPaymentScreen() {
               />
             </Pressable>
           ))}
-      </View>
+          </View>
+        </>
+      ) : (
+        <Notice>{t.paymentForYou}</Notice>
+      )}
       <Card style={styles.amountCard}>
         <Text style={[styles.label, { color: colors.text }]}>{t.contribution}</Text>
         <AppTextInput value={amount} onChangeText={setAmount} keyboardType="numeric" />

@@ -14,10 +14,32 @@ export function SettingsScreen() {
   const { t } = useTranslation();
   const { signOut } = useAuth();
   const data = useEqubStore((s) => s.data);
+  const role = useEqubStore((s) => s.role);
+  const joinCode = useEqubStore((s) => s.joinCode);
+  const rotateJoinCode = useEqubStore((s) => s.rotateJoinCode);
   const language = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
   const themeMode = useSettingsStore((s) => s.themeMode);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
+
+  const rotateCode = async () => {
+    if (joinCode) {
+      const confirmed = await useFeedbackStore.getState().requestConfirmation({
+        title: t.rotateCode,
+        message: t.rotateCodeQuestion,
+        confirmLabel: t.rotateCode,
+        cancelLabel: t.cancel,
+        icon: "key-outline",
+      });
+      if (!confirmed) return;
+    }
+    try {
+      await rotateJoinCode();
+      showToast("success", t.codeRotated);
+    } catch (error) {
+      showToast("error", t.actionFailed, error instanceof Error ? error.message : String(error));
+    }
+  };
 
   const confirmSignOut = async () => {
     const confirmed = await useFeedbackStore.getState().requestConfirmation({
@@ -53,6 +75,34 @@ export function SettingsScreen() {
             <Text style={[styles.meta, { color: colors.muted }]}>{t.memberCount}: {data.members.length}</Text>
             <Text style={[styles.meta, { color: colors.muted }]}>{t.contribution}: {money(data.contributionAmount)}</Text>
           </View>
+        </Card>
+
+        <Card style={styles.roleCard}>
+          <View style={styles.roleHeading}>
+            <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+            <View style={styles.roleInfo}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.accountRole}</Text>
+              <Text style={[styles.meta, { color: colors.muted }]}>
+                {role === "admin" ? t.roleAdmin : t.roleMember}
+              </Text>
+            </View>
+          </View>
+          {role === "admin" ? (
+            <>
+              <View style={[styles.inviteCode, { backgroundColor: colors.surfaceAlt }]}>
+                <Text style={[styles.meta, { color: colors.muted }]}>{t.groupInviteCode}</Text>
+                <Text selectable style={[styles.inviteCodeText, { color: colors.text }]}>
+                  {joinCode ?? t.noIdentity}
+                </Text>
+              </View>
+              <AppButton
+                label={joinCode ? t.rotateCode : t.groupInviteCode}
+                icon={joinCode ? "refresh-outline" : "key-outline"}
+                onPress={rotateCode}
+                secondary
+              />
+            </>
+          ) : null}
         </Card>
 
         <Card style={styles.preferenceCard}>
@@ -111,6 +161,11 @@ const styles = StyleSheet.create({
   groupCard: { flexDirection: "row", alignItems: "center", gap: 13 },
   groupIcon: { width: 46, height: 46, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   groupInfo: { flex: 1 },
+  roleCard: { gap: 12 },
+  roleHeading: { flexDirection: "row", alignItems: "center", gap: 10 },
+  roleInfo: { flex: 1 },
+  inviteCode: { borderRadius: 15, padding: 14, gap: 6 },
+  inviteCodeText: { fontSize: 20, fontWeight: "900", letterSpacing: 2 },
   rowTitle: { fontWeight: "800", fontSize: 15 },
   meta: { fontSize: 11, marginTop: 5 },
   preferenceCard: { gap: 8 },

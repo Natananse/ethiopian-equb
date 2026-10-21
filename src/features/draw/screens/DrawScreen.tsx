@@ -13,6 +13,8 @@ export function DrawScreen() {
   const { colors } = useTheme();
   const { t, language } = useTranslation();
   const data = useEqubStore((state) => state.data);
+  const role = useEqubStore((state) => state.role);
+  const isAdmin = role === "admin";
   const drawWinner = useEqubStore((state) => state.drawWinner);
   const advanceCycle = useEqubStore((state) => state.advanceCycle);
   const startNextRotation = useEqubStore((state) => state.startNextRotation);
@@ -89,10 +91,12 @@ export function DrawScreen() {
           </View>
 
           <View style={styles.statsRow}>
-            <View style={[styles.stat, { backgroundColor: "rgba(255,255,255,0.09)" }]}>
-              <Text style={[styles.statNumber, { color: colors.accent }]}>{eligible.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.onBrandMuted }]}>{t.eligibleMembers}</Text>
-            </View>
+            {isAdmin ? (
+              <View style={[styles.stat, { backgroundColor: "rgba(255,255,255,0.09)" }]}>
+                <Text style={[styles.statNumber, { color: colors.accent }]}>{eligible.length}</Text>
+                <Text style={[styles.statLabel, { color: colors.onBrandMuted }]}>{t.eligibleMembers}</Text>
+              </View>
+            ) : null}
             <View style={[styles.stat, { backgroundColor: "rgba(255,255,255,0.09)" }]}>
               <Text style={[styles.statNumber, { color: colors.onBrand }]}>{winnersCount}</Text>
               <Text style={[styles.statLabel, { color: colors.onBrandMuted }]}>{t.winnersThisRotation}</Text>
@@ -120,25 +124,31 @@ export function DrawScreen() {
             </>
           ) : (
             <>
-              <Text style={[styles.prompt, { color: colors.onBrandMuted }]}>{t.drawPrompt}</Text>
-              {activeMembers.length === 0 ? (
-                <Notice>{t.noActiveMembers}</Notice>
-              ) : cycle && eligible.length === 0 && identityIssueMembers.length === 0 ? (
-                <Notice>{t.rotationComplete}</Notice>
-              ) : null}
-              <AppButton
-                label={drawing ? t.drawing : t.drawNow}
-                onPress={draw}
-                icon="sparkles"
-                accent
-                disabled={drawing || !cycle || eligible.length === 0 || identityIssueMembers.length > 0}
-              />
-              {drawing ? <ActivityIndicator color={colors.primary} /> : null}
+              {isAdmin ? (
+                <>
+                  <Text style={[styles.prompt, { color: colors.onBrandMuted }]}>{t.drawPrompt}</Text>
+                  {activeMembers.length === 0 ? (
+                    <Notice>{t.noActiveMembers}</Notice>
+                  ) : cycle && eligible.length === 0 && identityIssueMembers.length === 0 ? (
+                    <Notice>{t.rotationComplete}</Notice>
+                  ) : null}
+                  <AppButton
+                    label={drawing ? t.drawing : t.drawNow}
+                    onPress={draw}
+                    icon="sparkles"
+                    accent
+                    disabled={drawing || !cycle || eligible.length === 0 || identityIssueMembers.length > 0}
+                  />
+                  {drawing ? <ActivityIndicator color={colors.primary} /> : null}
+                </>
+              ) : (
+                <Notice>{t.noCurrentWinner}</Notice>
+              )}
             </>
           )}
         </Card>
 
-        {currentCycleDraw ? (
+        {isAdmin && currentCycleDraw ? (
           eligible.length > 0 ? (
             <AppButton label={t.nextCycle} onPress={openNextCycle} icon="arrow-forward" />
           ) : activeMembers.length > 0 ? (
@@ -149,14 +159,14 @@ export function DrawScreen() {
           ) : null
         ) : null}
 
-        {identityIssueMembers.length > 0 ? (
+        {isAdmin && identityIssueMembers.length > 0 ? (
           <View style={styles.rotationActions}>
             <Notice>{`${t.identityIncomplete} (${identityIssueMembers.length})`}</Notice>
             <AppButton label={t.goToMembers} onPress={() => router.push("/members")} icon="people-outline" secondary />
           </View>
         ) : null}
 
-        <Card style={styles.poolCard}>
+        {isAdmin ? <Card style={styles.poolCard}>
           <View style={styles.poolHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.eligiblePool}</Text>
             <Text style={[styles.poolCount, { color: colors.primary }]}>{eligible.length}</Text>
@@ -183,7 +193,7 @@ export function DrawScreen() {
               </Text>
             </Pressable>
           ) : null}
-        </Card>
+        </Card> : null}
 
         <View style={styles.historyHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.drawHistory}</Text>

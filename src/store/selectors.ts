@@ -37,7 +37,9 @@ export function selectMemberById(data: EqubState, memberId: string): Member | un
 }
 
 export function memberName(data: EqubState, memberId: string): string {
-  return selectMemberById(data, memberId)?.name ?? "Unknown member";
+  return selectMemberById(data, memberId)?.name
+    ?? data.draws?.find((draw) => draw.winnerMemberId === memberId)?.winnerName
+    ?? "Unknown member";
 }
 
 /** The member's confirmed contribution for a cycle, if they have paid. */

@@ -44,6 +44,7 @@ function AuthenticatedRoutes() {
     <EqubProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="access" />
         <Stack.Screen
           name="add-member"
           options={{ presentation: "modal", headerShown: true, title: t.addMember, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}

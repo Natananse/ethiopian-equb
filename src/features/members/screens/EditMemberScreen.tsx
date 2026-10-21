@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,12 +12,15 @@ export function EditMemberScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { memberId } = useLocalSearchParams<{ memberId: string }>();
+  const role = useEqubStore((state) => state.role);
   const member = useEqubStore((state) => state.data.members.find((item) => item.id === memberId));
   const updateMember = useEqubStore((state) => state.updateMember);
   const [name, setName] = useState(member?.name ?? "");
   const [customerNumber, setCustomerNumber] = useState(member?.customerNumber ?? "");
   const [idNumber, setIdNumber] = useState(member?.idNumber ?? "");
   const [phone, setPhone] = useState(member?.phone ?? "");
+
+  if (role !== "admin") return <Redirect href="/(tabs)" />;
 
   const save = async () => {
     if (!member) return;
