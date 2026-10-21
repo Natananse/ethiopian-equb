@@ -5,6 +5,7 @@ import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ConvexAuthBridge } from "@/auth/ConvexAuthBridge";
+import { AppFeedback } from "@/components/layout/AppFeedback";
 import { useTranslation } from "@/core/i18n";
 import { useSettingsHydration } from "@/hooks/useSettingsHydration";
 import { EqubProvider } from "@/store";
@@ -68,6 +69,7 @@ function AppProviders() {
       <ConvexAuthBridge>
         <AuthenticatedRoutes />
       </ConvexAuthBridge>
+      <AppFeedback />
     </SafeAreaProvider>
   );
 }

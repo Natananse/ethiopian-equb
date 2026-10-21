@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AppButton, AppTextInput, Card } from "@/components/ui";
 import { useTranslation } from "@/core/i18n";
+import { showToast } from "@/core/feedback";
 import { useEqubStore } from "@/store";
 import { spacing, useTheme } from "@/theme";
 
@@ -21,16 +22,17 @@ export function EditMemberScreen() {
   const save = async () => {
     if (!member) return;
     if (!name.trim() || !customerNumber.trim() || !idNumber.trim()) {
-      Alert.alert("Required", t.required);
+      showToast("error", "Required", t.required);
       return;
     }
     try {
       await updateMember(member.id, { name, customerNumber, idNumber, phone });
     } catch (error) {
-      Alert.alert("Could not update member", error instanceof Error ? error.message : "Unknown error");
+      showToast("error", "Could not update member", error instanceof Error ? error.message : "Unknown error");
       return;
     }
-    Alert.alert("Saved", t.memberAdded, [{ text: "OK", onPress: () => router.back() }]);
+    showToast("success", "Saved", t.memberAdded);
+    router.back();
   };
 
   return (

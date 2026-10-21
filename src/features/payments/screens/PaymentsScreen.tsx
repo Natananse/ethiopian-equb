@@ -1,11 +1,13 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppButton, Card, Notice, Screen, SegmentedControl } from "@/components/ui";
 import { money, type Contribution, type Payout } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
+import { showToast } from "@/core/feedback";
 import { memberName, useEqubStore } from "@/store";
+import { useFeedbackStore } from "@/store/useFeedbackStore";
 import { spacing, useTheme } from "@/theme";
 import { PaymentCard } from "../components/PaymentCard";
 import { PayoutCard } from "@/features/payouts/components/PayoutCard";
@@ -20,41 +22,39 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
   const approvePayoutById = useEqubStore((s) => s.approvePayoutById);
   const [section, setSection] = useState<FinanceSection>(initialSection);
 
-  const verify = (payment: Contribution, confirmed: boolean) => {
-    const action = async () => {
-      try {
-        await verifyPayment(payment.id, confirmed);
-      } catch (error) {
-        Alert.alert("Could not complete action", error instanceof Error ? error.message : "Unknown error");
-      }
-    };
-    if (confirmed) {
-      Alert.alert("Verify payment", t.confirmPayment, [
-        { text: t.no, style: "cancel" },
-        { text: t.yes, onPress: action },
-      ]);
-    } else {
-      Alert.alert("Reject payment", "Reject this pending record?", [
-        { text: t.cancel, style: "cancel" },
-        { text: t.reject, style: "destructive", onPress: action },
-      ]);
+  const verify = async (payment: Contribution, confirmed: boolean) => {
+    const approved = await useFeedbackStore.getState().requestConfirmation({
+      title: confirmed ? "Verify payment" : "Reject payment",
+      message: confirmed ? t.confirmPayment : t.rejectPaymentQuestion,
+      confirmLabel: confirmed ? t.yes : t.reject,
+      cancelLabel: t.cancel,
+      danger: !confirmed,
+      icon: confirmed ? "checkmark-circle-outline" : "close-circle-outline",
+    });
+    if (!approved) return;
+    try {
+      await verifyPayment(payment.id, confirmed);
+      showToast("success", confirmed ? t.paymentVerified : t.paymentRejected);
+    } catch (error) {
+      showToast("error", t.actionFailed, error instanceof Error ? error.message : "Unknown error");
     }
   };
 
-  const approve = (payout: Payout) => {
-    Alert.alert("Approve payout", `Approve ${money(payout.netAmount)} for ${memberName(data, payout.recipientMemberId)}?`, [
-      { text: t.cancel, style: "cancel" },
-      {
-        text: t.yes,
-        onPress: async () => {
-          try {
-            await approvePayoutById(payout.id);
-          } catch (error) {
-            Alert.alert("Could not complete action", error instanceof Error ? error.message : "Unknown error");
-          }
-        },
-      },
-    ]);
+  const approve = async (payout: Payout) => {
+    const approved = await useFeedbackStore.getState().requestConfirmation({
+      title: t.approve,
+      message: `Approve ${money(payout.netAmount)} for ${memberName(data, payout.recipientMemberId)}?`,
+      confirmLabel: t.yes,
+      cancelLabel: t.cancel,
+      icon: "wallet-outline",
+    });
+    if (!approved) return;
+    try {
+      await approvePayoutById(payout.id);
+      showToast("success", t.approve);
+    } catch (error) {
+      showToast("error", t.actionFailed, error instanceof Error ? error.message : "Unknown error");
+    }
   };
 
   const reversed = [...data.contributions].reverse();

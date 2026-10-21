@@ -1,10 +1,12 @@
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
 import { AppButton, Card, Notice, Screen, SegmentedControl, ThemeToggle } from "@/components/ui";
 import { money } from "@/core/engine";
 import { useTranslation, type Language } from "@/core/i18n";
+import { showToast } from "@/core/feedback";
 import { useEqubStore, useSettingsStore, type ThemeMode } from "@/store";
+import { useFeedbackStore } from "@/store/useFeedbackStore";
 import { spacing, useTheme } from "@/theme";
 
 export function SettingsScreen() {
@@ -17,19 +19,22 @@ export function SettingsScreen() {
   const themeMode = useSettingsStore((s) => s.themeMode);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
 
-  const confirmSignOut = () =>
-    Alert.alert(t.signOut, "You can sign back in to access your cloud-synced Equb data.", [
-      { text: t.cancel, style: "cancel" },
-      {
-        text: t.signOut,
-        style: "destructive",
-        onPress: () => {
-          void signOut().catch((error: unknown) => {
-            Alert.alert("Could not sign out", error instanceof Error ? error.message : String(error));
-          });
-        },
-      },
-    ]);
+  const confirmSignOut = async () => {
+    const confirmed = await useFeedbackStore.getState().requestConfirmation({
+      title: t.signOut,
+      message: t.signOutQuestion,
+      confirmLabel: t.signOut,
+      cancelLabel: t.cancel,
+      danger: true,
+      icon: "log-out-outline",
+    });
+    if (!confirmed) return;
+    try {
+      await signOut();
+    } catch (error) {
+      showToast("error", "Could not sign out", error instanceof Error ? error.message : "Unknown error");
+    }
+  };
 
   return (
     <Screen>

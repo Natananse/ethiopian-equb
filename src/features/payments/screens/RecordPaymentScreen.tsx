@@ -1,10 +1,11 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AppButton, AppTextInput, Card, Notice } from "@/components/ui";
 import { money } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
+import { showToast } from "@/core/feedback";
 import { selectActiveCycle, useEqubStore } from "@/store";
 import { radius, spacing, useTheme } from "@/theme";
 
@@ -26,21 +27,22 @@ export function RecordPaymentScreen() {
 
   const submit = async () => {
     if (!cycleId || !selectedMember) {
-      Alert.alert("Choose a member", t.selectMember);
+      showToast("error", "Choose a member", t.selectMember);
       return;
     }
     const value = Number(amount);
     if (!Number.isFinite(value) || value <= 0) {
-      Alert.alert("Invalid amount", "Enter an amount greater than zero.");
+      showToast("error", "Invalid amount", "Enter an amount greater than zero.");
       return;
     }
     try {
       await recordPayment({ memberId: selectedMember, cycleId, amount: value, note });
     } catch (error) {
-      Alert.alert("Could not complete action", error instanceof Error ? error.message : "Unknown error");
+      showToast("error", "Could not complete action", error instanceof Error ? error.message : "Unknown error");
       return;
     }
-    Alert.alert("Submitted", t.paymentSaved, [{ text: "OK", onPress: () => router.back() }]);
+    showToast("success", "Submitted", t.paymentSaved);
+    router.back();
   };
 
   return (

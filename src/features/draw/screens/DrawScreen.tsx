@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppButton, Card, Notice, Screen } from "@/components/ui";
 import { currentRotationNumber, eligibleDrawMembers, membersWithIdentityIssues, type DrawRecord } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
+import { showToast } from "@/core/feedback";
 import { selectActiveCycle, useEqubStore } from "@/store";
 import { radius, spacing, useTheme } from "@/theme";
 
@@ -31,7 +32,7 @@ export function DrawScreen() {
   const locale = language === "am" ? "am-ET" : "en-ET";
 
   const showError = (title: string, error: unknown) => {
-    Alert.alert(title, error instanceof Error ? error.message : String(error));
+    showToast("error", title, error instanceof Error ? error.message : String(error));
   };
 
   const draw = () => {

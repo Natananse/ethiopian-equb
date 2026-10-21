@@ -8,12 +8,13 @@
  * @module
  */
 
+import type * as equb from "../equb.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as equb from "../equb.js";
 
 declare const fullApi: ApiFromModules<{
   equb: typeof equb;

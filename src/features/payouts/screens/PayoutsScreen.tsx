@@ -1,9 +1,11 @@
-import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card, Notice, Screen } from "@/components/ui";
 import { money, type Payout } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
+import { showToast } from "@/core/feedback";
 import { memberName, useEqubStore } from "@/store";
+import { useFeedbackStore } from "@/store/useFeedbackStore";
 import { spacing, useTheme } from "@/theme";
 import { PayoutCard } from "../components/PayoutCard";
 
@@ -14,20 +16,21 @@ export function PayoutsScreen() {
   const approvePayoutById = useEqubStore((s) => s.approvePayoutById);
   const drawnCycles = [...data.cycles].filter((cycle) => cycle.recipientMemberId).reverse();
 
-  const approve = (payout: Payout) => {
-    Alert.alert("Approve payout", `Approve ${money(payout.netAmount)} for ${memberName(data, payout.recipientMemberId)}?`, [
-      { text: t.cancel, style: "cancel" },
-      {
-        text: t.yes,
-        onPress: async () => {
-          try {
-            await approvePayoutById(payout.id);
-          } catch (error) {
-            Alert.alert("Could not complete action", error instanceof Error ? error.message : "Unknown error");
-          }
-        },
-      },
-    ]);
+  const approve = async (payout: Payout) => {
+    const confirmed = await useFeedbackStore.getState().requestConfirmation({
+      title: t.approve,
+      message: `Approve ${money(payout.netAmount)} for ${memberName(data, payout.recipientMemberId)}?`,
+      confirmLabel: t.yes,
+      cancelLabel: t.cancel,
+      icon: "wallet-outline",
+    });
+    if (!confirmed) return;
+    try {
+      await approvePayoutById(payout.id);
+      showToast("success", t.approve);
+    } catch (error) {
+      showToast("error", t.actionFailed, error instanceof Error ? error.message : "Unknown error");
+    }
   };
 
   return (

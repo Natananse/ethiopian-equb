@@ -32,11 +32,11 @@ type RecordData =
 type StoredRecords = Record<RecordKind, Doc<"records">[]>;
 
 const MAX_RECORDS: Record<RecordKind, number> = {
-  member: 1000,
-  contribution: 10000,
-  cycle: 1000,
-  payout: 5000,
-  draw: 5000,
+  member: 500,
+  contribution: 8000,
+  cycle: 500,
+  payout: 1000,
+  draw: 1000,
 };
 
 async function ownerTokenIdentifier(ctx: QueryCtx | MutationCtx): Promise<string> {

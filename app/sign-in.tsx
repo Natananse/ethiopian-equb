@@ -2,8 +2,10 @@ import { useSSO } from "@clerk/expo";
 import { useSignIn, useSignUp } from "@clerk/expo/legacy";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppButton, AppTextInput, Card } from "@/components/ui";
+import { showToast } from "@/core/feedback";
+import { useTranslation } from "@/core/i18n";
 import { spacing, useTheme } from "@/theme";
 
 type Mode = "signIn" | "signUp";
@@ -11,6 +13,7 @@ type Step = "email" | "code";
 
 export default function SignInScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { startSSOFlow } = useSSO();
   const signInAuth = useSignIn();
   const signUpAuth = useSignUp();
@@ -21,12 +24,12 @@ export default function SignInScreen() {
   const [busy, setBusy] = useState(false);
 
   const showError = (error: unknown) => {
-    Alert.alert("Authentication failed", error instanceof Error ? error.message : String(error));
+    showToast("error", t.authenticationFailed, error instanceof Error ? error.message : String(error));
   };
 
   const continueWithEmail = async () => {
     if (!email.trim()) {
-      Alert.alert("Email required", "Enter your email address to continue.");
+      showToast("error", "Email required", "Enter your email address to continue.");
       return;
     }
     setBusy(true);
@@ -59,7 +62,7 @@ export default function SignInScreen() {
 
   const verifyCode = async () => {
     if (!code.trim()) {
-      Alert.alert("Code required", "Enter the verification code sent to your email.");
+      showToast("error", "Code required", "Enter the verification code sent to your email.");
       return;
     }
     setBusy(true);

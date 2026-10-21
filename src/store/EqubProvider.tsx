@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery } from "convex/react";
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { create } from "zustand";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { api } from "../../convex/_generated/api";
 import { migratePersistedEqubState } from "@/core/engine";
@@ -10,6 +11,7 @@ export const EQUB_STORAGE_KEY = "ethiopian-equb-state-v1";
 
 interface EqubStore {
   data: EqubState;
+  ready: boolean;
   addMember: (input: { name: string; customerNumber: string; idNumber: string; phone?: string }) => Promise<void>;
   updateMember: (memberId: string, input: { name: string; customerNumber: string; idNumber: string; phone?: string }) => Promise<void>;
   recordPayment: (input: { memberId: string; cycleId: string; amount: number; note?: string }) => Promise<void>;
@@ -20,7 +22,35 @@ interface EqubStore {
   startNextRotation: () => Promise<void>;
 }
 
-const EqubContext = createContext<EqubStore | null>(null);
+const notReady = async () => {
+  throw new Error("Equb data is not ready.");
+};
+
+const emptyEqubState: EqubState = {
+  groupName: "",
+  currency: "ETB",
+  contributionAmount: 0,
+  frequency: "monthly",
+  members: [],
+  contributions: [],
+  cycles: [],
+  payouts: [],
+  draws: [],
+  currentRotation: 0,
+};
+
+export const useEqubStore = create<EqubStore>(() => ({
+  data: emptyEqubState,
+  ready: false,
+  addMember: notReady,
+  updateMember: notReady,
+  recordPayment: notReady,
+  verifyPayment: notReady,
+  approvePayoutById: notReady,
+  drawWinner: notReady,
+  advanceCycle: notReady,
+  startNextRotation: notReady,
+}));
 
 function withoutDemoSeed(state: EqubState): EqubState {
   const demoIds = new Set(state.members.filter((member) => /^member-\d+$/.test(member.id)).map((member) => member.id));
@@ -62,6 +92,7 @@ export function EqubProvider({ children }: { children: ReactNode }) {
   const advanceCycle = useMutation(api.equb.advanceCycleForEqub);
   const startNextRotation = useMutation(api.equb.startNextRotationForEqub);
   const [migrationReady, setMigrationReady] = useState(false);
+  const storeReady = useEqubStore((state) => state.ready);
   const [migrationError, setMigrationError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
@@ -100,10 +131,11 @@ export function EqubProvider({ children }: { children: ReactNode }) {
     })();
   }, [importDeviceState, migrationError, migrationReady, result]);
 
-  const value = useMemo<EqubStore | null>(() => {
-    if (!result) return null;
-    return {
+  useEffect(() => {
+    if (!result || !migrationReady) return;
+    useEqubStore.setState({
       data: result.state,
+      ready: true,
       addMember: async (input) => { await addMember(input); },
       updateMember: async (memberId, input) => { await updateMember({ memberId, ...input }); },
       recordPayment: async (input) => { await recordPayment(input); },
@@ -112,18 +144,38 @@ export function EqubProvider({ children }: { children: ReactNode }) {
       drawWinner: async () => { await drawWinner({}); },
       advanceCycle: async () => { await advanceCycle({}); },
       startNextRotation: async () => { await startNextRotation({}); },
-    };
+    });
   }, [
     addMember,
     advanceCycle,
     approvePayoutById,
     drawWinner,
+    migrationReady,
     recordPayment,
     result,
     startNextRotation,
     updateMember,
     verifyPayment,
   ]);
+
+  useLayoutEffect(() => {
+    if (!result) useEqubStore.setState({ data: emptyEqubState, ready: false });
+  }, [result]);
+
+  useEffect(() => () => {
+    useEqubStore.setState({
+      data: emptyEqubState,
+      ready: false,
+      addMember: notReady,
+      updateMember: notReady,
+      recordPayment: notReady,
+      verifyPayment: notReady,
+      approvePayoutById: notReady,
+      drawWinner: notReady,
+      advanceCycle: notReady,
+      startNextRotation: notReady,
+    });
+  }, []);
 
   if (initializationError) {
     return (
@@ -143,7 +195,7 @@ export function EqubProvider({ children }: { children: ReactNode }) {
       </View>
     );
   }
-  if (!value || !migrationReady) {
+  if (!result || !migrationReady || !storeReady) {
     return (
       <View style={styles.status}>
         <ActivityIndicator />
@@ -151,13 +203,7 @@ export function EqubProvider({ children }: { children: ReactNode }) {
       </View>
     );
   }
-  return <EqubContext.Provider value={value}>{children}</EqubContext.Provider>;
-}
-
-export function useEqubStore<T>(selector: (state: EqubStore) => T): T {
-  const store = useContext(EqubContext);
-  if (!store) throw new Error("useEqubStore must be used inside an authenticated EqubProvider.");
-  return selector(store);
+  return <>{children}</>;
 }
 
 export type { EqubStore };
