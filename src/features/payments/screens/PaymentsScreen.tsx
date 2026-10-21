@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppButton, Card, Notice, Screen, SegmentedControl } from "@/components/ui";
 import { money, type Contribution, type Payout } from "@/core/engine";
@@ -64,6 +65,9 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <View style={styles.titleRow}>
+            <View style={[styles.titleIcon, { backgroundColor: colors.surfaceAlt }]}>
+              <Ionicons name="wallet-outline" size={21} color={colors.primary} />
+            </View>
             <Text style={[styles.pageTitle, { color: colors.text }]}>{t.finance}</Text>
             {section === "payments" ? (
               <View style={styles.addButton}>
@@ -141,11 +145,12 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: 30, gap: spacing.md },
+  content: { padding: spacing.lg, paddingBottom: 40, gap: spacing.md },
   header: { gap: spacing.md, marginBottom: spacing.sm },
-  titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10 },
-  pageTitle: { fontSize: 22, fontWeight: "900", flex: 1 },
-  addButton: { minWidth: 110 },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  titleIcon: { width: 42, height: 42, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  pageTitle: { fontSize: 25, fontWeight: "800", flex: 1 },
+  addButton: { minWidth: 94 },
   actions: { flexDirection: "row", gap: 9, marginTop: 5 },
   winnerLabel: { fontSize: 10, fontWeight: "800" },
   winnerName: { fontSize: 14, fontWeight: "800", marginTop: 6 },

@@ -1,9 +1,8 @@
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "@/core/i18n";
 import { spacing, useTheme } from "@/theme";
-import { ThemeToggle } from "../ui/ThemeToggle";
 
 export function AppHeader() {
   const { colors } = useTheme();
@@ -11,23 +10,23 @@ export function AppHeader() {
   return (
     <View style={[styles.header, { backgroundColor: colors.brand }]}>
       <View>
-        <Text style={[styles.brand, { color: colors.onBrand }]}>EQUB</Text>
+        <View style={styles.brandRow}>
+          <View style={[styles.brandMark, { backgroundColor: colors.accent }]}>
+            <Ionicons name="leaf" size={17} color={colors.brandDeep} />
+          </View>
+          <Text style={[styles.brand, { color: colors.onBrand }]}>EQUB</Text>
+        </View>
         <Text style={[styles.sub, { color: colors.onBrandMuted }]}>ETHIOPIAN SAVINGS CIRCLE</Text>
       </View>
       <View style={styles.right}>
-        <ThemeToggle />
         <Pressable
           accessibilityLabel={t.settings}
           accessibilityRole="button"
           onPress={() => router.push("/settings")}
-          style={[styles.settingsButton, { borderColor: colors.onBrandMuted }]}
+          style={[styles.settingsButton, { backgroundColor: "rgba(255,255,255,0.12)" }]}
         >
-          <Ionicons name="settings-outline" size={18} color={colors.onBrand} />
+          <Ionicons name="settings-outline" size={20} color={colors.onBrand} />
         </Pressable>
-        <View style={[styles.livePill, { borderColor: colors.onBrandMuted }]}>
-          <View style={[styles.liveDot, { backgroundColor: colors.accent }]} />
-          <Text style={[styles.liveText, { color: colors.onBrand }]}>DEMO</Text>
-        </View>
       </View>
     </View>
   );
@@ -35,33 +34,23 @@ export function AppHeader() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: 10,
-    paddingBottom: 14,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 14,
+    paddingBottom: 15,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  brand: { fontSize: 28, fontWeight: "900", letterSpacing: 4 },
-  sub: { fontSize: 9, letterSpacing: 1.6, marginTop: 2 },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  brandMark: { width: 29, height: 29, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  brand: { fontSize: 20, fontWeight: "900", letterSpacing: 3 },
+  sub: { fontSize: 8, letterSpacing: 1.35, marginTop: 4, marginLeft: 37 },
   right: { flexDirection: "row", alignItems: "center", gap: 8 },
   settingsButton: {
-    width: 34,
-    height: 34,
-    borderWidth: 1,
-    borderRadius: 17,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
-  livePill: {
-    borderWidth: 1,
-    borderRadius: 30,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  liveDot: { width: 7, height: 7, borderRadius: 4 },
-  liveText: { fontWeight: "800", fontSize: 10, letterSpacing: 1 },
 });

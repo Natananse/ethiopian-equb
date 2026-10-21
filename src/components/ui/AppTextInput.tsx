@@ -19,10 +19,10 @@ export function AppTextInput(props: TextInputProps) {
 const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 14,
+    borderRadius: radius.md,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    fontSize: 15,
     marginTop: 7,
   },
 });

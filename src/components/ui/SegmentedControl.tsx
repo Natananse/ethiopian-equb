@@ -15,7 +15,7 @@ interface Props<T extends string> {
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
   const { colors } = useTheme();
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { backgroundColor: colors.surfaceAlt }]}>
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -24,11 +24,11 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
             onPress={() => onChange(option.value)}
             style={[
               styles.segment,
-              { backgroundColor: colors.primary, borderColor: colors.border },
-              !selected && { backgroundColor: colors.surface, borderWidth: 1 },
+              { backgroundColor: selected ? colors.surface : "transparent", borderColor: colors.border },
+              selected && styles.selectedSegment,
             ]}
           >
-            <Text style={[styles.text, { color: colors.onBrand }, !selected && { color: colors.primary }]}>
+            <Text style={[styles.text, { color: selected ? colors.primary : colors.muted }]}>
               {option.label}
             </Text>
           </Pressable>
@@ -39,15 +39,16 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: 9, marginTop: 5 },
+  row: { flexDirection: "row", gap: 4, marginTop: 5, padding: 4, borderRadius: radius.md },
   segment: {
-    borderRadius: radius.sm + 2,
+    borderRadius: radius.sm,
     paddingHorizontal: 13,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
-    minHeight: 42,
+    minHeight: 44,
   },
-  text: { fontWeight: "800", fontSize: 12, textAlign: "center" },
+  selectedSegment: { shadowColor: "#142B20", shadowOpacity: 0.08, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
+  text: { fontWeight: "700", fontSize: 12, textAlign: "center" },
 });

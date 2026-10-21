@@ -73,46 +73,45 @@ export function DrawScreen() {
           <Text style={[styles.subtitle, { color: colors.muted }]}>{t.drawIntro}</Text>
         </View>
 
-        <Card style={styles.cycleCard}>
+        <Card style={[styles.cycleCard, styles.cycleHero, { backgroundColor: colors.brand, borderColor: colors.brand }]}>
           <View style={styles.cycleHeader}>
-            <View style={[styles.cycleMark, { backgroundColor: colors.surfaceAlt }]}>
-              <Ionicons name="sparkles-outline" size={24} color={colors.primary} />
+            <View style={[styles.cycleMark, { backgroundColor: "rgba(255,255,255,0.14)" }]}>
+              <Ionicons name="sparkles-outline" size={24} color={colors.accent} />
             </View>
             <View style={styles.cycleInfo}>
-              <Text style={[styles.eyebrow, { color: colors.primary }]}>{t.activeCycle}</Text>
-              <Text style={[styles.cycleTitle, { color: colors.text }]}>{cycle?.label ?? t.noActiveCycle}</Text>
+              <Text style={[styles.eyebrow, { color: colors.onBrandMuted }]}>{t.activeCycle}</Text>
+              <Text style={[styles.cycleTitle, { color: colors.onBrand }]}>{cycle?.label ?? t.noActiveCycle}</Text>
             </View>
-            <View style={[styles.rotationPill, { backgroundColor: colors.surfaceAlt }]}>
-              <Text style={[styles.rotationText, { color: colors.primary }]}>{t.rotation} {rotation}</Text>
+            <View style={[styles.rotationPill, { backgroundColor: "rgba(255,255,255,0.14)" }]}>
+              <Text style={[styles.rotationText, { color: colors.onBrand }]}>{t.rotation} {rotation}</Text>
             </View>
           </View>
 
           <View style={styles.statsRow}>
-            <View style={styles.stat}>
-              <Text style={[styles.statNumber, { color: colors.primary }]}>{eligible.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.muted }]}>{t.eligibleMembers}</Text>
+            <View style={[styles.stat, { backgroundColor: "rgba(255,255,255,0.09)" }]}>
+              <Text style={[styles.statNumber, { color: colors.accent }]}>{eligible.length}</Text>
+              <Text style={[styles.statLabel, { color: colors.onBrandMuted }]}>{t.eligibleMembers}</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.stat}>
-              <Text style={[styles.statNumber, { color: colors.success }]}>{winnersCount}</Text>
-              <Text style={[styles.statLabel, { color: colors.muted }]}>{t.winnersThisRotation}</Text>
+            <View style={[styles.stat, { backgroundColor: "rgba(255,255,255,0.09)" }]}>
+              <Text style={[styles.statNumber, { color: colors.onBrand }]}>{winnersCount}</Text>
+              <Text style={[styles.statLabel, { color: colors.onBrandMuted }]}>{t.winnersThisRotation}</Text>
             </View>
           </View>
 
           {currentCycleDraw ? (
             <>
-            <View style={[styles.winnerPanel, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
-              <Text style={[styles.eyebrow, { color: colors.primary }]}>{t.winner}</Text>
-              <Text style={[styles.winnerName, { color: colors.text }]}>
+            <View style={[styles.winnerPanel, { backgroundColor: "rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.18)" }]}>
+              <Text style={[styles.eyebrow, { color: colors.accent }]}>{t.winner}</Text>
+              <Text style={[styles.winnerName, { color: colors.onBrand }]}>
                 {currentCycleDraw.winnerName || memberForDraw(currentCycleDraw)?.name || t.noIdentity}
               </Text>
-              <Text style={[styles.winnerDetails, { color: colors.muted }]}>
+              <Text style={[styles.winnerDetails, { color: colors.onBrandMuted }]}>
                 {t.customerNumber}: {currentCycleDraw.winnerCustomerNumber || memberForDraw(currentCycleDraw)?.customerNumber || t.noIdentity}
               </Text>
-              <Text style={[styles.winnerDetails, { color: colors.muted }]}>
+              <Text style={[styles.winnerDetails, { color: colors.onBrandMuted }]}>
                 {t.idNumber}: {currentCycleDraw.winnerIdNumber || memberForDraw(currentCycleDraw)?.idNumber || t.noIdentity}
               </Text>
-              <Text style={[styles.winnerDetails, { color: colors.muted }]}>
+              <Text style={[styles.winnerDetails, { color: colors.onBrandMuted }]}>
                 {t.sequence}: {currentCycleDraw.sequenceNumber} · {new Date(currentCycleDraw.drawnAt).toLocaleDateString(locale)}
               </Text>
             </View>
@@ -120,7 +119,7 @@ export function DrawScreen() {
             </>
           ) : (
             <>
-              <Text style={[styles.prompt, { color: colors.muted }]}>{t.drawPrompt}</Text>
+              <Text style={[styles.prompt, { color: colors.onBrandMuted }]}>{t.drawPrompt}</Text>
               {activeMembers.length === 0 ? (
                 <Notice>{t.noActiveMembers}</Notice>
               ) : cycle && eligible.length === 0 && identityIssueMembers.length === 0 ? (
@@ -129,6 +128,8 @@ export function DrawScreen() {
               <AppButton
                 label={drawing ? t.drawing : t.drawNow}
                 onPress={draw}
+                icon="sparkles"
+                accent
                 disabled={drawing || !cycle || eligible.length === 0 || identityIssueMembers.length > 0}
               />
               {drawing ? <ActivityIndicator color={colors.primary} /> : null}
@@ -138,11 +139,11 @@ export function DrawScreen() {
 
         {currentCycleDraw ? (
           eligible.length > 0 ? (
-            <AppButton label={t.nextCycle} onPress={openNextCycle} />
+            <AppButton label={t.nextCycle} onPress={openNextCycle} icon="arrow-forward" />
           ) : activeMembers.length > 0 ? (
             <View style={styles.rotationActions}>
               <Notice>{t.nextRotationNotice}</Notice>
-              <AppButton label={t.nextRotation} onPress={openNextRotation} />
+              <AppButton label={t.nextRotation} onPress={openNextRotation} icon="refresh-outline" />
             </View>
           ) : null
         ) : null}
@@ -150,7 +151,7 @@ export function DrawScreen() {
         {identityIssueMembers.length > 0 ? (
           <View style={styles.rotationActions}>
             <Notice>{`${t.identityIncomplete} (${identityIssueMembers.length})`}</Notice>
-            <AppButton label={t.goToMembers} onPress={() => router.push("/members")} secondary />
+            <AppButton label={t.goToMembers} onPress={() => router.push("/members")} icon="people-outline" secondary />
           </View>
         ) : null}
 
@@ -220,11 +221,12 @@ export function DrawScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: 34, gap: spacing.md },
+  content: { padding: spacing.lg, paddingBottom: 40, gap: spacing.md },
   heading: { gap: spacing.xs, marginBottom: spacing.xs },
-  title: { fontSize: 23, fontWeight: "900" },
+  title: { fontSize: 25, fontWeight: "800" },
   subtitle: { fontSize: 12, lineHeight: 18 },
   cycleCard: { gap: spacing.md },
+  cycleHero: { padding: spacing.xl, borderRadius: radius.xl },
   poolCard: { gap: spacing.sm },
   cycleHeader: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   cycleMark: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center" },
@@ -234,10 +236,9 @@ const styles = StyleSheet.create({
   rotationPill: { borderRadius: radius.pill, paddingVertical: 7, paddingHorizontal: 10 },
   rotationText: { fontSize: 10, fontWeight: "800" },
   statsRow: { flexDirection: "row", alignItems: "center", paddingVertical: spacing.sm },
-  stat: { flex: 1, alignItems: "center", gap: 4 },
+  stat: { flex: 1, alignItems: "center", gap: 4, paddingVertical: 12, borderRadius: radius.md },
   statNumber: { fontSize: 27, fontWeight: "900" },
   statLabel: { fontSize: 10, fontWeight: "700", textAlign: "center" },
-  statDivider: { width: 1, height: 38 },
   prompt: { fontSize: 12, lineHeight: 18 },
   winnerPanel: { borderRadius: radius.md, borderWidth: 1, padding: spacing.md, gap: 4 },
   winnerName: { fontSize: 21, fontWeight: "900", marginTop: 2 },

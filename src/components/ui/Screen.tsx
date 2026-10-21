@@ -8,7 +8,7 @@ import { DemoBanner } from "../layout/DemoBanner";
 export function Screen({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.brand }]} edges={["top", "left", "right"]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={["top", "left", "right"]}>
       <AppHeader />
       <DemoBanner />
       <View style={[styles.main, { backgroundColor: colors.background }]}>{children}</View>

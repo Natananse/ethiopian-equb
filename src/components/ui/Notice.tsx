@@ -1,11 +1,18 @@
-import { StyleSheet, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, Text, View } from "react-native";
 import { radius, useTheme } from "@/theme";
 
 export function Notice({ children }: { children: string }) {
   const { colors } = useTheme();
-  return <Text style={[styles.notice, { color: colors.noticeText, backgroundColor: colors.noticeBackground }]}>{children}</Text>;
+  return (
+    <View style={[styles.notice, { backgroundColor: colors.noticeBackground, borderColor: colors.border }]}>
+      <Ionicons name="information-circle-outline" size={19} color={colors.primary} />
+      <Text style={[styles.text, { color: colors.noticeText }]}>{children}</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  notice: { borderRadius: radius.sm + 2, padding: 12, fontSize: 12, lineHeight: 18, overflow: "hidden" },
+  notice: { borderRadius: radius.md, padding: 13, borderWidth: StyleSheet.hairlineWidth, flexDirection: "row", alignItems: "flex-start", gap: 9 },
+  text: { flex: 1, fontSize: 12, lineHeight: 18 },
 });

@@ -27,7 +27,7 @@ export function StatusBadge({ status }: { status: string }) {
                 ? t.rejected
                 : status;
   return (
-    <View style={[styles.badge, { borderColor: color, backgroundColor: colors.surface }]}>
+    <View style={[styles.badge, { backgroundColor: `${color}1A` }]}>
       <Text style={{ color, fontSize: 11, fontWeight: "700" }}>{label}</Text>
     </View>
   );
@@ -35,11 +35,9 @@ export function StatusBadge({ status }: { status: string }) {
 
 const styles = StyleSheet.create({
   badge: {
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    marginTop: 4,
+    borderRadius: 99,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     alignSelf: "flex-start",
   },
 });

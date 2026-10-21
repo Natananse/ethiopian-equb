@@ -9,12 +9,12 @@ export function Card({ children, style }: { children: React.ReactNode; style?: S
 const styles = StyleSheet.create({
   card: {
     borderRadius: radius.lg,
-    padding: spacing.lg - 2,
-    borderWidth: 1,
-    shadowColor: "#0A3F8D",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    padding: spacing.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: "#142B20",
+    shadowOpacity: 0.045,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
 });

@@ -1,4 +1,5 @@
 import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Card, Notice, Screen } from "@/components/ui";
 import { money, type Payout } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
@@ -37,7 +38,12 @@ export function PayoutsScreen() {
         keyExtractor={(p) => p.id}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={[styles.pageTitle, { color: colors.text }]}>{t.payouts}</Text>
+            <View style={styles.titleRow}>
+              <View style={[styles.titleIcon, { backgroundColor: colors.surfaceAlt }]}>
+                <Ionicons name="wallet-outline" size={21} color={colors.primary} />
+              </View>
+              <Text style={[styles.pageTitle, { color: colors.text }]}>{t.payouts}</Text>
+            </View>
             <Notice>{t.payoutWarning}</Notice>
             {drawnCycles.map((cycle) => {
               const winner = data.members.find((member) => member.id === cycle.recipientMemberId);
@@ -69,9 +75,11 @@ export function PayoutsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: 30, gap: spacing.md },
+  content: { padding: spacing.lg, paddingBottom: 40, gap: spacing.md },
   header: { gap: spacing.md, marginBottom: spacing.sm },
-  pageTitle: { fontSize: 22, fontWeight: "900" },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  titleIcon: { width: 42, height: 42, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  pageTitle: { fontSize: 25, fontWeight: "800" },
   winnerLabel: { fontSize: 10, fontWeight: "800" },
   winnerName: { fontSize: 14, fontWeight: "800", marginTop: 6 },
   winnerMeta: { fontSize: 10, marginTop: 4 },

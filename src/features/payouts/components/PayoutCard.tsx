@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 import { AppButton, Card, StatusBadge } from "@/components/ui";
 import { money, type Payout } from "@/core/engine";
@@ -16,15 +17,20 @@ export function PayoutCard({ payout, cycleLabel, recipientName, onApprove }: Pro
   const { t } = useTranslation();
   return (
     <Card style={styles.card}>
-      <Text style={[styles.eyebrow, { color: colors.primary }]}>{cycleLabel}</Text>
-      <Text style={[styles.title, { color: colors.text }]}>{recipientName}</Text>
+      <View style={styles.topRow}>
+        <View style={[styles.icon, { backgroundColor: colors.surfaceAlt }]}>
+          <Ionicons name="wallet-outline" size={19} color={colors.primary} />
+        </View>
+        <View style={styles.heading}>
+          <Text style={[styles.eyebrow, { color: colors.muted }]}>{cycleLabel}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{recipientName}</Text>
+        </View>
+        <StatusBadge status={payout.status} />
+      </View>
       <Text style={[styles.amount, { color: colors.primary }]}>{money(payout.netAmount)}</Text>
       <Text style={[styles.meta, { color: colors.muted }]}>
         Gross {money(payout.grossAmount)} · Deductions {money(payout.deductions)}
       </Text>
-      <View>
-        <StatusBadge status={payout.status} />
-      </View>
       {payout.status === "pending_approval" && onApprove ? (
         <AppButton label={t.approve} onPress={() => onApprove(payout)} />
       ) : null}
@@ -34,9 +40,12 @@ export function PayoutCard({ payout, cycleLabel, recipientName, onApprove }: Pro
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 7 },
-  eyebrow: { fontSize: 10, fontWeight: "800", letterSpacing: 1.4 },
-  title: { fontWeight: "700", fontSize: 13 },
-  amount: { fontSize: 25, fontWeight: "900", marginVertical: 8 },
+  card: { gap: 9 },
+  topRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  icon: { width: 40, height: 40, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  heading: { flex: 1, gap: 3 },
+  eyebrow: { fontSize: 10, fontWeight: "700" },
+  title: { fontWeight: "800", fontSize: 13 },
+  amount: { fontSize: 25, fontWeight: "900", marginTop: 4 },
   meta: { fontSize: 11, marginTop: 4 },
 });

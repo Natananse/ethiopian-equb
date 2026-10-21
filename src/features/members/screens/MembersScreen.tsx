@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import { AppButton, AppTextInput, Notice, Screen } from "@/components/ui";
@@ -32,18 +33,34 @@ export function MembersScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.titleRow}>
-              <Text style={[styles.pageTitle, { color: colors.text }]}>{t.allMembers}</Text>
+              <View style={styles.titleBlock}>
+                <Text style={[styles.pageTitle, { color: colors.text }]}>{t.allMembers}</Text>
+                <Text style={[styles.subtitle, { color: colors.muted }]}>{`${data.members.length} ${t.memberCount.toLowerCase()}`}</Text>
+              </View>
               <View style={styles.addButton}>
                 <AppButton label={t.add} icon="add" onPress={() => router.push("/add-member")} />
               </View>
             </View>
-            <AppTextInput value={query} onChangeText={setQuery} placeholder={t.search} />
+            <View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Ionicons name="search-outline" size={19} color={colors.muted} />
+              <AppTextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={t.search}
+                style={styles.searchInput}
+              />
+            </View>
             {identityIncompleteCount > 0 ? (
               <Notice>{`${t.identityIncomplete} (${identityIncompleteCount})`}</Notice>
             ) : null}
           </View>
         }
-        ListEmptyComponent={<Text style={{ color: colors.muted, fontSize: 13 }}>{t.noMembers}</Text>}
+        ListEmptyComponent={
+          <View style={[styles.empty, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="people-outline" size={27} color={colors.primary} />
+            <Text style={[styles.emptyText, { color: colors.text }]}>{t.noMembers}</Text>
+          </View>
+        }
         renderItem={({ item }) => {
           const confirmed = selectConfirmedContribution(data, item.id, cycleId);
           return (
@@ -62,9 +79,15 @@ export function MembersScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: 30, gap: spacing.md },
+  content: { padding: spacing.lg, paddingBottom: 40, gap: spacing.md },
   header: { gap: spacing.md, marginBottom: spacing.sm },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10 },
-  pageTitle: { fontSize: 22, fontWeight: "900", flex: 1 },
-  addButton: { minWidth: 110 },
+  titleBlock: { flex: 1, gap: 4 },
+  pageTitle: { fontSize: 25, fontWeight: "800" },
+  subtitle: { fontSize: 12 },
+  addButton: { minWidth: 98 },
+  search: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 17, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 13 },
+  searchInput: { flex: 1, borderWidth: 0, marginTop: 0, paddingHorizontal: 0, backgroundColor: "transparent" },
+  empty: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 20, minHeight: 150, alignItems: "center", justifyContent: "center", gap: 10, padding: 18 },
+  emptyText: { fontSize: 13, fontWeight: "600" },
 });

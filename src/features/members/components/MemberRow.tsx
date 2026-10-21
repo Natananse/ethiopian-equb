@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Member } from "@/core/engine";
 import { useTranslation } from "@/core/i18n";
@@ -29,15 +30,19 @@ export function MemberRow({ member, paid, amountLabel, onEdit, identityIssue }: 
         <Text style={[styles.meta, { color: colors.muted }]}>
           {t.idNumber}: {member.idNumber ?? t.noIdentity}{member.phone ? ` · ${member.phone}` : ""}
         </Text>
-        <Pressable onPress={onEdit} accessibilityRole="button" hitSlop={8}>
+        <Pressable onPress={onEdit} accessibilityRole="button" accessibilityLabel={t.edit} hitSlop={8} style={styles.editButton}>
           <Text style={[styles.edit, { color: colors.primary }]}>{t.edit}</Text>
+          <Ionicons name="create-outline" size={14} color={colors.primary} />
         </Pressable>
         {identityIssue ? <Text style={[styles.issue, { color: colors.danger }]}>{t.identityIssueTag}</Text> : null}
       </View>
       <View style={styles.right}>
-        <Text style={[styles.status, { color: paid ? colors.success : colors.accent }]}>
+        <View style={[styles.statusPill, { backgroundColor: paid ? colors.noticeBackground : colors.surfaceAlt }]}>
+          <View style={[styles.statusDot, { backgroundColor: paid ? colors.success : colors.accent }]} />
+          <Text style={[styles.status, { color: paid ? colors.success : colors.muted }]}>
           {paid ? t.confirmed : t.outstanding}
-        </Text>
+          </Text>
+        </View>
         <Text style={[styles.meta, { color: colors.muted }]}>{amountLabel}</Text>
       </View>
     </View>
@@ -47,19 +52,22 @@ export function MemberRow({ member, paid, amountLabel, onEdit, identityIssue }: 
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+    alignItems: "flex-start",
+    gap: 12,
     borderRadius: radius.md,
-    padding: 12,
-    borderWidth: 1,
+    padding: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  avatar: { width: 38, height: 38, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 17, fontWeight: "900" },
-  main: { flex: 1 },
-  name: { fontWeight: "700", fontSize: 13 },
+  avatar: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 18, fontWeight: "800" },
+  main: { flex: 1, minWidth: 0 },
+  name: { fontWeight: "800", fontSize: 14 },
   meta: { fontSize: 11, marginTop: 4 },
-  edit: { fontSize: 10, fontWeight: "800", marginTop: 7 },
+  editButton: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8, alignSelf: "flex-start" },
+  edit: { fontSize: 11, fontWeight: "700" },
   issue: { fontSize: 9, fontWeight: "800", marginTop: 3 },
-  right: { alignItems: "flex-end", gap: 3 },
-  status: { fontWeight: "700", fontSize: 11 },
+  right: { alignItems: "flex-end", gap: 6 },
+  statusPill: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 5 },
+  statusDot: { width: 6, height: 6, borderRadius: 4 },
+  status: { fontWeight: "700", fontSize: 10 },
 });
