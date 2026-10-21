@@ -17,13 +17,13 @@ export function AddMemberScreen() {
   const [idNumber, setIdNumber] = useState("");
   const [phone, setPhone] = useState("");
 
-  const save = () => {
+  const save = async () => {
     if (!name.trim() || !customerNumber.trim() || !idNumber.trim()) {
       Alert.alert("Required", t.required);
       return;
     }
     try {
-      addMember({ name, customerNumber, idNumber, phone });
+      await addMember({ name, customerNumber, idNumber, phone });
     } catch (error) {
       Alert.alert("Could not add member", error instanceof Error ? error.message : "Unknown error");
       return;

@@ -13,8 +13,11 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as equb from "../equb.js";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  equb: typeof equb;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.

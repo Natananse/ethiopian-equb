@@ -1,6 +1,9 @@
-import { Redirect } from "expo-router";
+import { Redirect, type Href } from "expo-router";
+import { useAuth } from "@clerk/expo";
 
-/** The tab group owns the screens; "/" lands on the dashboard tab. */
 export default function Index() {
-  return <Redirect href="/(tabs)" />;
+  const { isLoaded, isSignedIn } = useAuth();
+  if (!isLoaded) return null;
+  const destination: Href = isSignedIn ? "/(tabs)" : "/sign-in" as Href;
+  return <Redirect href={destination} />;
 }

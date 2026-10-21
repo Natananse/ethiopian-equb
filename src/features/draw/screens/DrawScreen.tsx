@@ -36,9 +36,9 @@ export function DrawScreen() {
 
   const draw = () => {
     setDrawing(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        drawWinner();
+        await drawWinner();
       } catch (error) {
         showError(t.drawTitle, error);
       } finally {
@@ -47,17 +47,17 @@ export function DrawScreen() {
     }, 450);
   };
 
-  const openNextCycle = () => {
+  const openNextCycle = async () => {
     try {
-      advanceCycle();
+      await advanceCycle();
     } catch (error) {
       showError(t.nextCycle, error);
     }
   };
 
-  const openNextRotation = () => {
+  const openNextRotation = async () => {
     try {
-      startNextRotation();
+      await startNextRotation();
     } catch (error) {
       showError(t.nextRotation, error);
     }

@@ -24,7 +24,7 @@ export function RecordPaymentScreen() {
   const [amount, setAmount] = useState(String(data.contributionAmount));
   const [note, setNote] = useState("");
 
-  const submit = () => {
+  const submit = async () => {
     if (!cycleId || !selectedMember) {
       Alert.alert("Choose a member", t.selectMember);
       return;
@@ -35,7 +35,7 @@ export function RecordPaymentScreen() {
       return;
     }
     try {
-      recordPayment({ memberId: selectedMember, cycleId, amount: value, note });
+      await recordPayment({ memberId: selectedMember, cycleId, amount: value, note });
     } catch (error) {
       Alert.alert("Could not complete action", error instanceof Error ? error.message : "Unknown error");
       return;

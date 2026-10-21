@@ -19,9 +19,9 @@ export function PayoutsScreen() {
       { text: t.cancel, style: "cancel" },
       {
         text: t.yes,
-        onPress: () => {
+        onPress: async () => {
           try {
-            approvePayoutById(payout.id);
+            await approvePayoutById(payout.id);
           } catch (error) {
             Alert.alert("Could not complete action", error instanceof Error ? error.message : "Unknown error");
           }

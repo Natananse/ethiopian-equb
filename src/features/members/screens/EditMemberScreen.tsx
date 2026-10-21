@@ -18,14 +18,14 @@ export function EditMemberScreen() {
   const [idNumber, setIdNumber] = useState(member?.idNumber ?? "");
   const [phone, setPhone] = useState(member?.phone ?? "");
 
-  const save = () => {
+  const save = async () => {
     if (!member) return;
     if (!name.trim() || !customerNumber.trim() || !idNumber.trim()) {
       Alert.alert("Required", t.required);
       return;
     }
     try {
-      updateMember(member.id, { name, customerNumber, idNumber, phone });
+      await updateMember(member.id, { name, customerNumber, idNumber, phone });
     } catch (error) {
       Alert.alert("Could not update member", error instanceof Error ? error.message : "Unknown error");
       return;

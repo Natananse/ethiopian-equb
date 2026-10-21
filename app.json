@@ -7,7 +7,6 @@
         "foregroundImage": "./assets/adaptive-icon/foreground.png",
         "backgroundImage": "./assets/adaptive-icon/background.png",
         "backgroundColor": "#FFFFFF"
-        
       }
     },
     "experiments": {
@@ -18,7 +17,9 @@
     "plugins": [
       "expo-router",
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "scheme": "equb",
     "slug": "equb",

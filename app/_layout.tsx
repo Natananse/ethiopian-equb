@@ -1,20 +1,18 @@
-import { ClerkProvider } from "@clerk/expo";
+import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { Stack } from "expo-router";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ConvexAuthBridge } from "@/auth/ConvexAuthBridge";
 import { useTranslation } from "@/core/i18n";
-import { useStoreHydration } from "@/hooks/useStoreHydration";
+import { useSettingsHydration } from "@/hooks/useSettingsHydration";
+import { EqubProvider } from "@/store";
 import { useTheme } from "@/theme";
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-if (!publishableKey) {
-  throw new Error("Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY. Add your key to .env.local.\nRun: 1) clerk auth login  2) clerk link  3) clerk env pull — then restart the dev server.");
-}
-
-function HydrationGate() {
+function LoadingScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   return (
@@ -25,40 +23,75 @@ function HydrationGate() {
   );
 }
 
-export default function RootLayout() {
-  const hydrated = useStoreHydration();
+function AuthenticatedRoutes() {
+  const auth = useAuth();
+  const settingsHydrated = useSettingsHydration();
   const { colors } = useTheme();
   const { t } = useTranslation();
 
+  if (!auth.isLoaded || !settingsHydrated) return <LoadingScreen />;
+  if (!auth.isSignedIn) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="sign-in" />
+        <Stack.Screen name="oauth-callback" />
+      </Stack>
+    );
+  }
+
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <SafeAreaProvider>
-        {/* The brand header is dark blue in both themes, so status icons stay light. */}
-        <ExpoStatusBar style="light" />
-        {!hydrated ? (
-          <HydrationGate />
-        ) : (
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen
-              name="add-member"
-              options={{ presentation: "modal", headerShown: true, title: t.addMember, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
-            />
-            <Stack.Screen
-              name="edit-member"
-              options={{ presentation: "modal", headerShown: true, title: t.editMember, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
-            />
-            <Stack.Screen
-              name="record-payment"
-              options={{ presentation: "modal", headerShown: true, title: t.recordPayment, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
-            />
-          </Stack>
-        )}
-      </SafeAreaProvider>
+    <EqubProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="add-member"
+          options={{ presentation: "modal", headerShown: true, title: t.addMember, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
+        />
+        <Stack.Screen
+          name="edit-member"
+          options={{ presentation: "modal", headerShown: true, title: t.editMember, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
+        />
+        <Stack.Screen
+          name="record-payment"
+          options={{ presentation: "modal", headerShown: true, title: t.recordPayment, headerStyle: { backgroundColor: colors.surface }, headerTintColor: colors.text }}
+        />
+        <Stack.Screen name="oauth-callback" />
+      </Stack>
+    </EqubProvider>
+  );
+}
+
+function AppProviders() {
+  return (
+    <SafeAreaProvider>
+      <ExpoStatusBar style="light" />
+      <ConvexAuthBridge>
+        <AuthenticatedRoutes />
+      </ConvexAuthBridge>
+    </SafeAreaProvider>
+  );
+}
+
+export default function RootLayout() {
+  if (!clerkPublishableKey) {
+    return (
+      <View style={styles.configError}>
+        <Text style={styles.configTitle}>Authentication is not configured</Text>
+        <Text style={styles.configText}>Set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your Expo environment, then rebuild the app.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+      <AppProviders />
     </ClerkProvider>
   );
 }
 
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
+  configError: { flex: 1, justifyContent: "center", padding: 24, gap: 12, backgroundColor: "#fff" },
+  configTitle: { color: "#111827", fontSize: 20, fontWeight: "800" },
+  configText: { color: "#4b5563", fontSize: 14, lineHeight: 21 },
 });

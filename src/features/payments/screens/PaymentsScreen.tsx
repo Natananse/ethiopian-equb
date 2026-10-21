@@ -21,9 +21,9 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
   const [section, setSection] = useState<FinanceSection>(initialSection);
 
   const verify = (payment: Contribution, confirmed: boolean) => {
-    const action = () => {
+    const action = async () => {
       try {
-        verifyPayment(payment.id, confirmed);
+        await verifyPayment(payment.id, confirmed);
       } catch (error) {
         Alert.alert("Could not complete action", error instanceof Error ? error.message : "Unknown error");
       }
@@ -46,9 +46,9 @@ export function PaymentsScreen({ initialSection = "payments" }: { initialSection
       { text: t.cancel, style: "cancel" },
       {
         text: t.yes,
-        onPress: () => {
+        onPress: async () => {
           try {
-            approvePayoutById(payout.id);
+            await approvePayoutById(payout.id);
           } catch (error) {
             Alert.alert("Could not complete action", error instanceof Error ? error.message : "Unknown error");
           }
