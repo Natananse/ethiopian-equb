@@ -371,7 +371,6 @@ export const joinEqub = mutation({
   args: {
     joinCode: v.string(),
     customerNumber: v.string(),
-    idNumber: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -390,9 +389,8 @@ export const joinEqub = mutation({
 
     const code = args.joinCode.trim().toUpperCase();
     const customerNumber = args.customerNumber.trim();
-    const idNumber = args.idNumber.trim();
-    if (!code || !customerNumber || !idNumber) {
-      throw new ConvexError("Group code, customer number, and ID number are required.");
+    if (!code || !customerNumber) {
+      throw new ConvexError("Group code and customer number are required.");
     }
     const equb = await ctx.db
       .query("equbs")
@@ -407,15 +405,15 @@ export const joinEqub = mutation({
     if (memberDocs.length > MAX_RECORDS.member) {
       throw new ConvexError("This Equb has reached the supported member record limit.");
     }
-    const match = memberDocs.find((doc) =>
+    const matches = memberDocs.filter((doc) =>
       doc.record.kind === "member" &&
       doc.record.status === "active" &&
-      doc.record.customerNumber?.trim() === customerNumber &&
-      doc.record.idNumber?.trim() === idNumber,
+      doc.record.customerNumber?.trim() === customerNumber,
     );
-    if (!match || match.record.kind !== "member") {
+    if (matches.length !== 1 || matches[0].record.kind !== "member") {
       throw new ConvexError("The group code or member details are invalid.");
     }
+    const match = matches[0];
     const existingLink = await ctx.db
       .query("memberships")
       .withIndex("by_equb_and_member", (q) => q.eq("equbId", equb._id).eq("memberId", match.record.id))

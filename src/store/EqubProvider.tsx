@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery } from "convex/react";
 import { create } from "zustand";
-import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { api } from "../../convex/_generated/api";
 import { migratePersistedEqubState } from "@/core/engine";
@@ -107,15 +107,14 @@ export function EqubProvider({ children }: { children: ReactNode }) {
   const setMemberRole = useMutation(api.equb.setMemberRole);
   const rotateJoinCode = useMutation(api.equb.rotateJoinCode);
   const [migrationReady, setMigrationReady] = useState(false);
+  const migrationInProgress = useRef(false);
   const storeReady = useEqubStore((state) => state.ready);
   const [migrationError, setMigrationError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (result === undefined || migrationReady || migrationError) return;
-    if (result === null) {
-      setMigrationReady(true);
-      return;
-    }
+    if (result === undefined || migrationReady || migrationError || migrationInProgress.current) return;
+    if (result === null) return;
+    migrationInProgress.current = true;
     void (async () => {
       try {
         const raw = result.role === "admin" ? await AsyncStorage.getItem(EQUB_STORAGE_KEY) : null;
@@ -135,6 +134,8 @@ export function EqubProvider({ children }: { children: ReactNode }) {
         setMigrationReady(true);
       } catch (error) {
         setMigrationError(error instanceof Error ? error.message : String(error));
+      } finally {
+        migrationInProgress.current = false;
       }
     })();
   }, [importDeviceState, migrationError, migrationReady, result]);

@@ -16,6 +16,7 @@ export function MembersScreen() {
   const { t } = useTranslation();
   const data = useEqubStore((s) => s.data);
   const role = useEqubStore((s) => s.role);
+  const memberId = useEqubStore((s) => s.memberId);
   const memberRoles = useEqubStore((s) => s.memberRoles);
   const setMemberRole = useEqubStore((s) => s.setMemberRole);
   const [query, setQuery] = useState("");
@@ -60,8 +61,10 @@ export function MembersScreen() {
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <View style={styles.titleBlock}>
-                <Text style={[styles.pageTitle, { color: colors.text }]}>{t.allMembers}</Text>
-                <Text style={[styles.subtitle, { color: colors.muted }]}>{`${data.members.length} ${t.memberCount.toLowerCase()}`}</Text>
+                <Text style={[styles.pageTitle, { color: colors.text }]}>{role === "admin" ? t.allMembers : t.yourProfile}</Text>
+                <Text style={[styles.subtitle, { color: colors.muted }]}>
+                  {role === "admin" ? `${data.members.length} ${t.memberCount.toLowerCase()}` : t.yourProfileIntro}
+                </Text>
               </View>
               {role === "admin" ? (
                 <View style={styles.addButton}>
@@ -101,7 +104,7 @@ export function MembersScreen() {
               roleLabel={role === "admin" && linkedRoles.has(item.id)
                 ? linkedRoles.get(item.id) === "admin" ? t.setMember : t.promoteAdmin
                 : undefined}
-              onRoleChange={role === "admin" && linkedRoles.has(item.id) ? () => changeRole(item.id) : undefined}
+              onRoleChange={role === "admin" && item.id !== memberId && linkedRoles.has(item.id) ? () => changeRole(item.id) : undefined}
             />
           );
         }}

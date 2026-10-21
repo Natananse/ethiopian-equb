@@ -18,7 +18,6 @@ export function AccessScreen() {
   const joinEqub = useMutation(api.equb.joinEqub);
   const [joinCode, setJoinCode] = useState("");
   const [customerNumber, setCustomerNumber] = useState("");
-  const [idNumber, setIdNumber] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -40,7 +39,7 @@ export function AccessScreen() {
   };
 
   const joinGroup = async () => {
-    if (!joinCode.trim() || !customerNumber.trim() || !idNumber.trim()) {
+    if (!joinCode.trim() || !customerNumber.trim()) {
       showToast("error", t.required, t.joinDetailsRequired);
       return;
     }
@@ -49,7 +48,6 @@ export function AccessScreen() {
       await joinEqub({
         joinCode: joinCode.trim(),
         customerNumber: customerNumber.trim(),
-        idNumber: idNumber.trim(),
       });
       showToast("success", t.joinedGroup);
       router.replace("/(tabs)");
@@ -88,12 +86,6 @@ export function AccessScreen() {
             value={customerNumber}
             onChangeText={setCustomerNumber}
             placeholder={t.customerNumber}
-            autoCapitalize="none"
-          />
-          <AppTextInput
-            value={idNumber}
-            onChangeText={setIdNumber}
-            placeholder={t.idNumber}
             autoCapitalize="none"
           />
           <AppButton label={busy ? t.pleaseWait : t.joinGroup} onPress={joinGroup} disabled={busy} icon="enter-outline" />

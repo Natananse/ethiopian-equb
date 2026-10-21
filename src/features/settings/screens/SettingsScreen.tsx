@@ -72,7 +72,9 @@ export function SettingsScreen() {
           </View>
           <View style={styles.groupInfo}>
             <Text style={[styles.rowTitle, { color: colors.text }]}>{data.groupName}</Text>
-            <Text style={[styles.meta, { color: colors.muted }]}>{t.memberCount}: {data.members.length}</Text>
+            {role === "admin" ? (
+              <Text style={[styles.meta, { color: colors.muted }]}>{t.memberCount}: {data.members.length}</Text>
+            ) : null}
             <Text style={[styles.meta, { color: colors.muted }]}>{t.contribution}: {money(data.contributionAmount)}</Text>
           </View>
         </Card>

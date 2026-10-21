@@ -4,9 +4,9 @@ A mobile-first Equb management app with:
 
 - Amharic / English UI and light / dark themes
 - Clerk authentication using Google OAuth or email verification codes
-- Owner-scoped Equb data stored in Convex and synced in realtime
+- Role-scoped Equb data stored in Convex and synced in realtime
 - Monthly contribution tracking, verification, draw history, and payout records
-- One Equb group per signed-in account
+- One Equb group per signed-in account (owner or linked member)
 - One-time import of existing local records; generated sample members and demo payments are excluded
 
 Payment records and payout approvals are bookkeeping only. The app does not
@@ -24,9 +24,24 @@ transfer.
 - `src/store/useSettingsStore.ts`: Local-only language and theme preferences
 - `src/features/`: Dashboard, members, draw, payment, payout, and settings screens
 
-Every Equb query and mutation derives ownership from Clerk's verified Convex
-identity; clients do not choose the account owner. Local theme and language
+Every Equb query and mutation derives access from Clerk's verified Convex
+identity; clients do not choose the account or role. Local theme and language
 preferences remain on the device.
+
+## Group access and roles
+
+After signing in, an account can create a group as its administrator or join an
+existing group with its invite code and the customer number on its roster
+record. Customer numbers must uniquely identify a roster member. Administrators
+can add members, promote linked member accounts
+to administrator, and rotate the invite code. Rotating a code prevents new
+joins using the previous code; it does not unlink existing accounts.
+
+Administrators can manage group records and verify contributions or approve
+payouts. Members can view and submit contributions only for their linked
+profile, and can read group draw and payout history. Other member profiles and
+contributions are not returned to member accounts. These boundaries are
+enforced in Convex functions as well as reflected in the interface.
 
 ## Configure Clerk and Convex
 
@@ -50,12 +65,13 @@ Convex deployment settings for real values.
 
 ## Local data migration
 
-After a user signs in, the app imports the previous AsyncStorage payload under
-`ethiopian-equb-state-v1` into that user's Equb once. The migration skips
+After an administrator creates or accesses an Equb, the app imports the
+previous AsyncStorage payload under `ethiopian-equb-state-v1` into that
+administrator's Equb once. The migration skips
 generated member IDs such as `member-1` and generated `demo-payment-*` entries,
 and preserves actual added records. Local data is removed only after the
-cloud import succeeds. Existing user-created records stay private to their
-Clerk account.
+cloud import succeeds. Linked member accounts do not import device data into a
+group.
 
 Legacy cycle membership snapshots are best-effort because older app versions
 did not retain historical rosters. The app does not invent missing customer or
@@ -82,4 +98,4 @@ npm run typecheck
 ```
 
 Before using with a real group, configure backups, monitoring, privacy and
-retention controls, operational audit procedures, and explicit group roles.
+retention controls, and operational audit procedures.
