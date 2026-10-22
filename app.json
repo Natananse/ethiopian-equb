@@ -1,13 +1,22 @@
-
 {
   "expo": {
     "name": "Ethiopian Equb",
     "slug": "ethiopian-equb",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#172B43"
+    },
     "android": {
-      "package": "com.natnael.ethiopianequb"
+      "package": "com.natnael.ethiopianequb",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#172B43"
+      }
     },
     "plugins": [
       "expo-status-bar"
