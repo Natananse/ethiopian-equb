@@ -87,15 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-<<<<<<< HEAD
-    namespace 'com.natnael.ethiopianequb'
-    defaultConfig {
-        applicationId 'com.natnael.ethiopianequb'
-=======
     namespace 'com.equb.digital'
     defaultConfig {
         applicationId 'com.equb.digital'
->>>>>>> pr-1
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

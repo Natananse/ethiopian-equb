@@ -1,23 +1,5 @@
 {
   "expo": {
-<<<<<<< HEAD
-    "name": "Ethiopian Equb",
-    "slug": "ethiopian-equb",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#172B43"
-    },
-    "android": {
-      "package": "com.natnael.ethiopianequb",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundColor": "#172B43"
-=======
     "icon": "./assets/icon.png",
     "android": {
       "package": "com.equb.digital",
@@ -25,7 +7,6 @@
         "foregroundImage": "./assets/adaptive-icon/foreground.png",
         "backgroundImage": "./assets/adaptive-icon/background.png",
         "backgroundColor": "#FFFFFF"
->>>>>>> pr-1
       }
     },
     "experiments": {
