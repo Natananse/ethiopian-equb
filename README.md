@@ -1,66 +1,101 @@
 # Ethiopian Equb — Expo TypeScript MVP
 
-A mobile-first Equb management MVP with:
-- Amharic / English UI toggle
-- 40 fictional demo members
-- Dashboard totals driven by the financial engine
-- Local persistence on the device
-- Member list, search, and add-member form
-- Contribution records with pending / confirmed / rejected states
-- Payout list and a guarded approval helper
-- Unit tests for core collection and payment rules
+A mobile-first Equb management app with:
 
-## Important status
+- Amharic / English UI and light / dark themes
+- Clerk authentication using Google OAuth or email verification codes
+- Role-scoped Equb data stored in Convex and synced in realtime
+- Monthly contribution tracking, verification, draw history, and payout records
+- One Equb group per signed-in account (owner or linked member)
+- One-time import of existing local records; generated sample members and demo payments are excluded
 
-This is a **local MVP**, not a production financial service. Data is stored on the current device with AsyncStorage. There is no authentication, shared cloud database, real SMS/OTP, Telebirr integration, bank integration, or server-side authorization yet. Demo payments are not real transactions. Do not use it to manage real members' money until a secure backend and operational controls have been built and tested.
+Payment records and payout approvals are bookkeeping only. The app does not
+transfer money or replace independent verification of a bank/mobile-money
+transfer.
 
-## Requirements
+## Architecture
 
-- Node.js LTS
-- npm
-- Android emulator, Android phone with Expo Go, or a browser for supported Expo web features
+- `app/`: Expo Router screens, Clerk/Convex providers, sign-in, and tabs
+- `convex/schema.ts`: Account and Equb record schema with indexes
+- `convex/auth.config.ts`: Clerk JWT issuer for Convex authorization
+- `convex/equb.ts`: Authenticated owner-scoped queries and mutations
+- `src/core/engine/`: Financial rules and domain types
+- `src/store/EqubProvider.tsx`: Reactive Convex state, mutations, and local-data import
+- `src/store/useSettingsStore.ts`: Local-only language and theme preferences
+- `src/features/`: Dashboard, members, draw, payment, payout, and settings screens
 
-## Run on Ubuntu
+Every Equb query and mutation derives access from Clerk's verified Convex
+identity; clients do not choose the account or role. Local theme and language
+preferences remain on the device.
+
+## Group access and roles
+
+After signing in, an account can create a group as its administrator or join an
+existing group with its invite code and the customer number on its roster
+record. Customer numbers must uniquely identify a roster member. Administrators
+can add members, promote linked member accounts
+to administrator, and rotate the invite code. Rotating a code prevents new
+joins using the previous code; it does not unlink existing accounts.
+
+Administrators can manage group records and verify contributions or approve
+payouts. Members can view and submit contributions only for their linked
+profile, and can read group draw and payout history. Other member profiles and
+contributions are not returned to member accounts. These boundaries are
+enforced in Convex functions as well as reflected in the interface.
+
+## Configure Clerk and Convex
+
+1. Create a Clerk application. Enable Google OAuth and email verification
+   codes. Add the app's `equb` redirect scheme to the Clerk configuration.
+2. Create a Clerk JWT template named `convex` with the application ID `convex`.
+   Copy the Clerk publishable key and issuer domain.
+3. Add these variables to your ignored `.env.local` (preserve any Convex
+   deployment settings already there):
+   - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `EXPO_PUBLIC_CONVEX_URL`
+   - `CLERK_JWT_ISSUER_DOMAIN`
+4. Set `CLERK_JWT_ISSUER_DOMAIN` as a Convex deployment environment variable.
+   Then run `npx convex dev` to deploy the schema and functions.
+5. Run `npx expo start` for development. Configure the same mobile public
+   variables in the release build environment and rebuild the native app.
+
+Never include Clerk secret keys in Expo `EXPO_PUBLIC_*` variables or the mobile
+app. `.env.example` has variable names only. Use the ignored local env file and
+Convex deployment settings for real values.
+
+## Local data migration
+
+After an administrator creates or accesses an Equb, the app imports the
+previous AsyncStorage payload under `ethiopian-equb-state-v1` into that
+administrator's Equb once. The migration skips
+generated member IDs such as `member-1` and generated `demo-payment-*` entries,
+and preserves actual added records. Local data is removed only after the
+cloud import succeeds. Linked member accounts do not import device data into a
+group.
+
+Legacy cycle membership snapshots are best-effort because older app versions
+did not retain historical rosters. The app does not invent missing customer or
+ID numbers; complete them before drawing.
+
+## Requirements and run
+
+- Node.js LTS and npm
+- Convex deployment and Clerk application configured as above
+- Android emulator/device or browser for supported Expo web features
 
 ```bash
-unzip ethiopian-equb-app.zip
-cd ethiopian-equb-app
 npm install
 npx expo start
 ```
 
-Then:
-- Press `a` to open Android emulator if Android Studio emulator is installed and running.
-- Or scan the QR code with Expo Go on a compatible phone.
-- For web, install the required web dependencies if Expo prompts you, then use `w`.
+For Android emulator, press `a`; for web, press `w`.
 
-## Test the financial engine
+## Validate
 
 ```bash
 npm run test:engine
-```
-
-## Check TypeScript
-
-```bash
 npm run typecheck
 ```
 
-## Demo calculations
-
-40 active members × 5,000 ETB = 200,000 ETB expected.
-8 confirmed payments × 5,000 ETB = 40,000 ETB confirmed.
-Outstanding = 160,000 ETB.
-Collection progress = 20%.
-
-Pending contributions are excluded from confirmed totals. The sample payout is labelled as demo-only and must not be treated as a real approved transfer.
-
-## Suggested next production milestones
-
-1. Add backend API and database migrations.
-2. Add authentication, roles, server-side authorization, and audit logs.
-3. Move all financial calculations and verification decisions to the server.
-4. Integrate a payment provider only after reviewing its official requirements and obtaining credentials.
-5. Add backups, monitoring, reconciliation, privacy controls, and security testing.
-6. Test with a small, consenting pilot group before production.
-# ethiopian-equb
+Before using with a real group, configure backups, monitoring, privacy and
+retention controls, and operational audit procedures.

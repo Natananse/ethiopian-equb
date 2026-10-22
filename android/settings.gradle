@@ -31,7 +31,11 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
 }
 expoAutolinking.useExpoModules()
 
+<<<<<<< HEAD
 rootProject.name = 'Ethiopian Equb'
+=======
+rootProject.name = 'Equb'
+>>>>>>> pr-1
 
 expoAutolinking.useExpoVersionCatalog()
 
